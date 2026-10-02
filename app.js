@@ -6,6 +6,7 @@ const state = {
     necessidade: '',
     usuarios: 1,
     modulos: {},
+    cardapioPlano: '',
     lead: {
       nome: '',
       empresa: '',
@@ -40,6 +41,60 @@ function maskWhatsApp(value = '') {
   }
 
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+const planosCardapio = [
+  {
+    id: 'start',
+    nome: 'Start',
+    valor: 39.90,
+    destaque: false,
+    features: [
+      'Pedidos Ilimitados',
+      'Itens Ilimitados',
+      'Cardápio ou Catálogo em grade',
+      'Fotos e imagens nos itens',
+      'Adicione sua logomarca',
+      'Adicione plano de fundo',
+      'Página de contato',
+      'Cupom de desconto',
+      'Suporte por Email'
+    ]
+  },
+  {
+    id: 'premium',
+    nome: 'Premium',
+    valor: 79.90,
+    destaque: true,
+    features: [
+      'Pedidos Ilimitados',
+      'Itens Ilimitados',
+      'Cardápio ou Catálogo em grade',
+      'Fotos e imagens nos itens',
+      'Adicione sua logomarca',
+      'Adicione plano de fundo',
+      'Página de contato',
+      'Cupom de desconto',
+      'WhatsApp integrado',
+      'Suporte por Email'
+    ]
+  },
+  {
+    id: 'enterprise',
+    nome: 'Enterprise',
+    valor: 149.90,
+    destaque: false,
+    features: [
+      'Tudo do Premium, mais:',
+      'Integração via API',
+      'Impressão automática (ESC/POS)',
+      'Ponto de venda (PDV)'
+    ]
+  }
+];
+
+function getPlanoCardapio(id) {
+  return planosCardapio.find(plan => plan.id === id) || null;
 }
 
 // Dados dos Módulos para facilitar filtro e cálculo
@@ -223,9 +278,73 @@ function render() {
       break;
 
     case 5:
+      if (state.data.modulos.m14) {
+        content = `
+          <div class="screen">
+            ${renderProgress(5, 7)}
+            <h2>Escolha o plano do Cardápio Digital QR Code</h2>
+            <p>Selecione a opção ideal para o seu restaurante ou negócio.</p>
+
+            <div class="options-grid">
+              ${planosCardapio.map(plan => `
+                <label class="option-card ${state.data.cardapioPlano === plan.id ? 'selected' : ''}">
+                  <input type="radio" name="cardapioPlano" value="${plan.id}" ${state.data.cardapioPlano === plan.id ? 'checked' : ''} onchange="updateState('cardapioPlano', this.value); render()">
+                  <div class="check-indicator"></div>
+                  <div class="option-content">
+                    <span class="option-title">${plan.destaque ? '⭐ ' : ''}${plan.nome}</span>
+                    <span class="option-desc">R$ ${plan.valor.toFixed(2).replace('.', ',')}/Plano Mensal</span>
+                    ${plan.destaque ? '<div style="margin-top:8px; font-size:0.7rem; font-weight:800; color: var(--lime);">Mais popular</div>' : ''}
+                    <div style="margin-top: 10px; font-size: 0.72rem; color: var(--on-dark-muted); line-height: 1.6;">
+                      ${plan.features.map(feature => `<div>• ${feature}</div>`).join('')}
+                    </div>
+                  </div>
+                </label>
+              `).join('')}
+            </div>
+
+            <div class="nav-buttons">
+              <button class="btn-secondary" onclick="prevScreen()">Voltar</button>
+              <button class="btn-primary" onclick="nextScreen()" ${!state.data.cardapioPlano ? 'disabled' : ''}>Continuar</button>
+            </div>
+          </div>
+        `;
+      } else {
+        content = `
+          <div class="screen">
+            ${renderProgress(6, 7)}
+            <h2>A sua cotação personalizada está pronta!</h2>
+            <p>Informe os seus dados para enviarmos a proposta oficial e detalhada diretamente para o seu WhatsApp.</p>
+            
+            <div class="form-group">
+              <label class="form-label">Nome Completo</label>
+              <input type="text" placeholder="Seu nome" value="${state.data.lead.nome}" onchange="updateLead('nome', this.value)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nome da Empresa</label>
+              <input type="text" placeholder="Razão social ou Fantasia" value="${state.data.lead.empresa}" onchange="updateLead('empresa', this.value)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp com DDD</label>
+              <input type="tel" placeholder="(00) 00000-0000" value="${state.data.lead.whatsapp}" oninput="this.value = maskWhatsApp(this.value); updateLead('whatsapp', this.value)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-mail</label>
+              <input type="email" placeholder="seu@email.com.br" value="${state.data.lead.email}" onchange="updateLead('email', this.value)">
+            </div>
+            
+            <div class="nav-buttons">
+              <button class="btn-secondary" onclick="prevScreen()">Voltar</button>
+              <button class="btn-primary" onclick="calcularERedirecionar()" id="btn-finalizar">Enviar Cotação Para WhatsApp</button>
+            </div>
+          </div>
+        `;
+      }
+      break;
+
+    case 6:
       content = `
         <div class="screen">
-          ${renderProgress(5)}
+          ${renderProgress(6, 7)}
           <h2>A sua cotação personalizada está pronta!</h2>
           <p>Informe os seus dados para enviarmos a proposta oficial e detalhada diretamente para o seu WhatsApp.</p>
           
@@ -254,10 +373,10 @@ function render() {
       `;
       break;
 
-    case 6:
+    case 7:
       content = `
         <div class="screen">
-          ${renderProgress(6)}
+          ${renderProgress(7, 7)}
           <div style="background: var(--c-green); color: white; padding: 12px; border-radius: var(--r-md); font-size: var(--fs-sm); font-weight: 700; text-align: center; margin-bottom: 20px;">
             Cotação calculada com sucesso! A abrir a sua conversa no WhatsApp...
           </div>
@@ -274,6 +393,11 @@ function render() {
             <div style="font-size: var(--fs-md); font-weight: 800; color: var(--lime); margin-bottom: 4px;">
               Plano ${state.resultado.nomePlano}
             </div>
+            ${state.data.cardapioPlano ? `
+              <div style="font-size: var(--fs-xs); color: var(--on-dark-muted); margin-top: 8px;">
+                <strong>Cardápio Digital QR Code:</strong> ${getPlanoCardapio(state.data.cardapioPlano)?.nome || state.data.cardapioPlano} (${(getPlanoCardapio(state.data.cardapioPlano)?.valor || 0).toFixed(2).replace('.', ',')} / mês)
+              </div>
+            ` : ''}
             ${state.resultado.modulosNomes.length > 0 ? `
               <div style="font-size: var(--fs-xs); color: var(--on-dark-muted); margin-top: 8px;">
                 <strong>Módulos Adicionais:</strong><br>
@@ -328,24 +452,41 @@ function updateState(field, value) {
 }
 function updateModulo(id, checked) {
   state.data.modulos[id] = checked;
+  if (id === 'm14' && !checked) {
+    state.data.cardapioPlano = '';
+  }
 }
 function updateLead(field, value) {
   state.data.lead[field] = value;
 }
 function nextScreen() {
-  state.currentScreen++;
+  if (state.currentScreen === 4) {
+    state.currentScreen = state.data.modulos.m14 ? 5 : 6;
+  } else if (state.currentScreen === 5 && state.data.modulos.m14) {
+    state.currentScreen = 6;
+  } else {
+    state.currentScreen++;
+  }
   render();
 }
 function prevScreen() {
-  state.currentScreen--;
-  if (state.currentScreen === 4 && state.data.necessidade === 'fiscal') {
-    state.currentScreen--; // Pula a tela 4 se for fiscal
+  if (state.currentScreen === 6 && state.data.modulos.m14) {
+    state.currentScreen = 5;
+  } else if (state.currentScreen === 6 && !state.data.modulos.m14) {
+    state.currentScreen = 4;
+  } else if (state.currentScreen === 5 && state.data.modulos.m14) {
+    state.currentScreen = 4;
+  } else {
+    state.currentScreen--;
+    if (state.currentScreen === 4 && state.data.necessidade === 'fiscal') {
+      state.currentScreen--; // Pula a tela 4 se for fiscal
+    }
   }
   render();
 }
 function goToModulos() {
   if (state.data.necessidade === 'fiscal') {
-    state.currentScreen = 5; // Pula os módulos diretos para Captação
+    state.currentScreen = 6; // Pula os módulos diretos para Captação
   } else {
     state.currentScreen = 4;
   }
@@ -353,7 +494,7 @@ function goToModulos() {
 }
 function resetApp() {
   state.currentScreen = 1;
-  state.data = { segmento: '', regime: '', necessidade: '', usuarios: 1, modulos: {}, lead: { nome: '', empresa: '', whatsapp: '', email: '' } };
+  state.data = { segmento: '', regime: '', necessidade: '', usuarios: 1, modulos: {}, cardapioPlano: '', lead: { nome: '', empresa: '', whatsapp: '', email: '' } };
   render();
 }
 
@@ -404,6 +545,7 @@ function calcularERedirecionar() {
   let modulosConsulta = [];
 
   modulosData.forEach(m => {
+    if (m.id === 'm14') return;
     if (s.modulos[m.id]) {
       modulosNomes.push(m.nome);
       if (m.consulta) {
@@ -418,15 +560,24 @@ function calcularERedirecionar() {
     }
   });
 
+  const planoCardapio = s.modulos.m14 ? getPlanoCardapio(s.cardapioPlano) : null;
+  if (planoCardapio) {
+    modulosNomes.push(`Cardápio Digital QR Code - ${planoCardapio.nome}`);
+    modulosConsulta.push(`Cardápio Digital QR Code - ${planoCardapio.nome}`);
+    modulosValoresFormatados.push(`Cardápio Digital QR Code (${planoCardapio.nome} - R$ ${planoCardapio.valor.toFixed(2)})`);
+    valorModulos += planoCardapio.valor;
+  }
+
   const totalCalculado = valorPlano + valorExtras + valorModulos;
 
   state.resultado = {
     nomePlano, valorPlano, extras, valorExtras,
     modulosNomes, modulosValoresFormatados, modulosConsulta,
-    valorModulos, totalCalculado
+    valorModulos, totalCalculado,
+    planoCardapio
   };
 
-  state.currentScreen = 6;
+  state.currentScreen = 7;
   render();
   setTimeout(openWhatsApp, 1500); // Abre o zap automaticamente após 1.5s
 }
@@ -468,6 +619,7 @@ Acabei de efetuar a simulação na calculadora do vosso site e solicito a minha 
 📦 PROPOSTA DIAGNOSTICADA:
 • Plano Base: ${r.nomePlano} (R$ ${r.valorPlano.toFixed(2)})
 • Usuários Extras: ${r.extras} un. (R$ ${r.valorExtras.toFixed(2)})
+${r.planoCardapio ? `• Plano Cardápio Digital QR Code: ${r.planoCardapio.nome} (R$ ${r.planoCardapio.valor.toFixed(2)})` : ''}
 • Módulos Selecionados:
 ${r.modulosValoresFormatados.length > 0 ? r.modulosValoresFormatados.map(m => `  - ${m}`).join('\n') : '  - Nenhum adicional'}
 ${r.modulosConsulta.length > 0 ? `  (Módulos sob consulta técnica: ${r.modulosConsulta.join(', ')})` : ''}
