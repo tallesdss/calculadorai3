@@ -339,3 +339,52 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 .step-dot.active { background: var(--lime); }
 .step-dot.completed { background: var(--c-green); }
+
+@media (min-width: 900px) {
+  body {
+    padding: 28px;
+  }
+
+  main {
+    max-width: 1100px;
+    padding: 0;
+  }
+
+  .phone {
+    width: min(100%, 960px);
+    min-height: 700px;
+    margin: 0 auto;
+    border-radius: 32px;
+  }
+
+  .body {
+    padding: 24px 30px 36px;
+  }
+
+  .screen {
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .options-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav-buttons {
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  .phone {
+    width: min(100%, 1040px);
+  }
+
+  .options-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+

@@ -28,6 +28,20 @@ const state = {
 
 const appContainer = document.getElementById('app-container');
 
+function maskWhatsApp(value = '') {
+  const digits = String(value).replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 2) {
+    return digits ? `(${digits}` : '';
+  }
+
+  if (digits.length <= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 // Dados dos Módulos para facilitar filtro e cálculo
 const modulosData = [
   { id: 'm1', nome: 'Pix QR Code PDV', preco: 40, cond: (s) => (s.segmento === 'supermercado' || s.segmento === 'varejo' || s.segmento === 'food') && s.necessidade !== 'fiscal' },
@@ -225,7 +239,7 @@ function render() {
           </div>
           <div class="form-group">
             <label class="form-label">WhatsApp com DDD</label>
-            <input type="tel" placeholder="(00) 00000-0000" value="${state.data.lead.whatsapp}" onchange="updateLead('whatsapp', this.value)">
+            <input type="tel" placeholder="(00) 00000-0000" value="${state.data.lead.whatsapp}" oninput="this.value = maskWhatsApp(this.value); updateLead('whatsapp', this.value)">
           </div>
           <div class="form-group">
             <label class="form-label">E-mail</label>
@@ -234,7 +248,7 @@ function render() {
           
           <div class="nav-buttons">
             <button class="btn-secondary" onclick="prevScreen()">Voltar</button>
-            <button class="btn-primary" onclick="calcularERedirecionar()" id="btn-finalizar">Ver Cotação e Chamar no WhatsApp</button>
+            <button class="btn-primary" onclick="calcularERedirecionar()" id="btn-finalizar">Enviar Cotação Para WhatsApp</button>
           </div>
         </div>
       `;
@@ -297,7 +311,7 @@ function render() {
           </div>
 
           <div class="nav-buttons" style="flex-direction: column;">
-            <button class="btn-primary" onclick="openWhatsApp()">Receba a cotação pelo WhatsApp</button>
+            <button class="btn-primary" onclick="openWhatsApp()">Compartilhar Cotação pelo WhatsApp</button>
             <button class="btn-secondary" style="border:none; background:transparent;" onclick="resetApp()">Refazer Cotação</button>
           </div>
         </div>
@@ -348,8 +362,8 @@ function calcularERedirecionar() {
   const s = state.data;
   
   // Validar Lead
-  if(!s.lead.nome || !s.lead.empresa || !s.lead.whatsapp || !s.lead.email) {
-    alert("Por favor, preencha todos os campos para receber a cotação.");
+  if(!s.lead.nome || !s.lead.whatsapp) {
+    alert("Por favor, preencha seu nome e WhatsApp para receber a cotação.");
     return;
   }
 
