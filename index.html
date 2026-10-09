@@ -8,17 +8,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <main>
-    <div class="phone" aria-label="Calculadora">
-      <div class="status"><span>Cotação de Sistema</span><span>●●● ▮</span></div>
-      
-      <!-- Telas (Injetadas pelo JS) -->
-      <div id="app-container" class="body">
-        <!-- Conteúdo dinâmico -->
+  <div class="app-wrapper">
+    <section class="attendance-bar" aria-labelledby="attendance-title">
+      <h1 id="attendance-title">Atendimento</h1>
+      <div class="attendance-tabs" role="tablist" aria-label="Canal de atendimento">
+        <button id="tab-ligacao" class="attendance-tab" type="button" role="tab" aria-selected="true" aria-controls="attendance-content" data-attendance-tab="ligacao">Ligação</button>
+        <button id="tab-online" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="online" tabindex="-1">WhatsApp</button>
+        <button id="tab-presencial" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="presencial" tabindex="-1">Presencial</button>
       </div>
-      
+      <p id="attendance-content" class="attendance-content" role="tabpanel" aria-live="polite" aria-labelledby="tab-ligacao"></p>
+    </section>
+
+    <div class="main-grid">
+      <main id="app-container" class="body simulator-panel" aria-label="Simulador de cotação"></main>
+
+      <aside id="side-inspector" class="side-panel" aria-label="Detalhes dos módulos">
+        <div id="inspector-placeholder" class="inspector-placeholder">
+          <span class="inspector-icon" aria-hidden="true">i</span>
+          <p>Selecione ou toque em um módulo para ver detalhes, quando ele compensa e uma dica de apresentação.</p>
+        </div>
+        <div id="inspector-content" hidden>
+          <img id="insp-img" class="side-img" src="" alt="">
+          <h2 id="insp-titulo" class="side-title"></h2>
+          <p class="side-section"><strong>O que é:</strong> <span id="insp-oque"></span></p>
+          <p class="side-section"><strong>Para que serve:</strong> <span id="insp-paraque"></span></p>
+          <p class="side-section"><strong>Quando compensa:</strong> <span id="insp-quando"></span></p>
+          <div class="pitch-box"><strong>Dica de venda</strong><p id="insp-pitch"></p></div>
+        </div>
+      </aside>
     </div>
-  </main>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>

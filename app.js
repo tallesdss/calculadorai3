@@ -28,6 +28,114 @@ const state = {
 };
 
 const appContainer = document.getElementById('app-container');
+const attendanceScriptsByScreen = {
+  1: {
+    ligacao: 'Pergunte o segmento com entusiasmo. Explique que o sistema i3 é modular e não força o cliente a pagar por recursos que não usa.',
+    online: 'Olá! Para montar a proposta ideal, qual é o segmento da sua empresa hoje? Loja, mercado, restaurante, oficina ou serviço?',
+    presencial: 'Observe a operação e pergunte quais produtos têm maior giro. Mostre como uma tela de venda rápida pode evitar filas.'
+  },
+  2: {
+    ligacao: 'Pergunte o regime tributário: MEI, Simples ou Normal. Explore como a importação de XML e a tributação automática podem ajudar.',
+    online: 'Qual é o regime fiscal da empresa: MEI, Simples Nacional ou Lucro Presumido/Real? Essa informação ajuda a indicar a configuração certa.',
+    presencial: 'Converse sobre as regras fiscais da empresa e mostre como o sistema ajuda a reduzir erros na rotina tributária.'
+  },
+  3: {
+    ligacao: 'Descubra se a principal necessidade é emitir notas, controlar estoque ou acompanhar o financeiro. Confirme quantos usuários operarão o sistema.',
+    online: 'O que mais toma tempo hoje: emitir notas, controlar estoque ou conferir o caixa? Quantas pessoas vão usar o sistema?',
+    presencial: 'Entenda a rotina de cada operador e destaque o controle de acesso para ações como cancelamentos, sangrias e descontos.'
+  },
+  4: {
+    ligacao: 'Apresente Pix e TEF para agilizar o caixa e reduzir erros de conferência. Para restaurantes, pergunte sobre comandas e pedidos.',
+    online: 'Vamos avaliar os recursos compatíveis com sua operação. Pix integrado e TEF, por exemplo, podem agilizar o caixa e facilitar a conferência.',
+    presencial: 'Observe os meios de pagamento e explique como a integração do TEF reduz a conferência manual das vendas.'
+  },
+  5: {
+    ligacao: 'Apresente as opções de cardápio digital e relacione os recursos do plano escolhido à rotina do estabelecimento.',
+    online: 'Escolha o plano de Cardápio Digital QR Code mais adequado. Posso ajudar a comparar os recursos de cada opção.',
+    presencial: 'Mostre no celular como o cliente navega pelo cardápio digital e como fotos dos itens podem apoiar a escolha.'
+  },
+  6: {
+    ligacao: 'Confirme os dados para preparar a proposta e combine o próximo contato ou uma demonstração do sistema.',
+    online: 'Preencha seus dados para receber o resumo da proposta e os valores estimados pelo WhatsApp.',
+    presencial: 'Confirme os dados do cliente, formalize o orçamento e alinhe os próximos passos da implantação.'
+  },
+  7: {
+    ligacao: 'Apresente o valor estimado, valide os módulos e pergunte se podemos agendar uma demonstração ou instalação.',
+    online: 'A proposta está pronta. Use o botão para abrir o WhatsApp e enviar o resumo ao atendimento comercial.',
+    presencial: 'Revise a proposta com o cliente, relacione os recursos às necessidades levantadas e combine o próximo passo.'
+  }
+};
+let currentAttendanceTab = 'ligacao';
+const attendanceTabs = [...document.querySelectorAll('[data-attendance-tab]')];
+const attendanceContent = document.getElementById('attendance-content');
+
+function selectAttendanceTab(tabName) {
+  currentAttendanceTab = tabName;
+  attendanceTabs.forEach(tab => {
+    const selected = tab.dataset.attendanceTab === tabName;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    if (selected) attendanceContent.setAttribute('aria-labelledby', tab.id);
+  });
+  updateAttendanceContent();
+}
+
+function updateAttendanceContent() {
+  const screenScripts = attendanceScriptsByScreen[state.currentScreen] || attendanceScriptsByScreen[1];
+  attendanceContent.textContent = screenScripts[currentAttendanceTab];
+}
+
+attendanceTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectAttendanceTab(tab.dataset.attendanceTab));
+  tab.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const nextIndex = (index + direction + attendanceTabs.length) % attendanceTabs.length;
+    attendanceTabs[nextIndex].focus();
+    selectAttendanceTab(attendanceTabs[nextIndex].dataset.attendanceTab);
+  });
+});
+
+const modulosDetalhes = {
+  m1: { titulo: 'Pix Dinâmico QR Code no PDV', imagem: 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?auto=format&fit=crop&w=900&q=80', oQueE: 'Gera um QR Code único para cada venda diretamente no caixa.', paraQueServe: 'Confirma o pagamento e agiliza a liberação da venda sem conferência manual de comprovantes.', quandoVale: 'Lojas e mercados com filas ou alto volume de pagamentos por Pix.', pitchVenda: 'O caixa confirma o pagamento no sistema e segue para a próxima venda com mais agilidade.' },
+  m2: { titulo: 'TEF Integrado (PayGo / SiTef)', imagem: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80', oQueE: 'Integra o sistema de vendas ao terminal de pagamento.', paraQueServe: 'Envia o valor da venda ao terminal e registra o resultado no sistema.', quandoVale: 'Operações com volume relevante de pagamentos com cartão.', pitchVenda: 'A integração reduz digitação manual e facilita a conferência das vendas com cartão.' },
+  m3: { titulo: 'Smart TEF POS Móvel', imagem: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=900&q=80', oQueE: 'Terminal móvel integrado ao sistema de gestão.', paraQueServe: 'Permite concluir pagamentos no salão ou próximo ao cliente.', quandoVale: 'Restaurantes, bares e lojas com atendimento fora do balcão.', pitchVenda: 'Sua equipe pode concluir a venda onde o cliente está, sem interromper o atendimento.' },
+  m4: { titulo: 'Gestor Tributário (Simples)', imagem: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=900&q=80', oQueE: 'Recursos para apoiar a configuração tributária de empresas do Simples Nacional.', paraQueServe: 'Ajuda a organizar regras fiscais e informações de produtos no sistema.', quandoVale: 'Varejo, mercados e distribuidoras que precisam manter cadastros fiscais consistentes.', pitchVenda: 'Uma configuração fiscal organizada dá mais previsibilidade à emissão e ao trabalho com a contabilidade.' },
+  m5: { titulo: 'Gestor Tributário (Regime Normal)', imagem: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80', oQueE: 'Recursos de gestão tributária para empresas no regime normal.', paraQueServe: 'Centraliza regras fiscais usadas na operação e na emissão de documentos.', quandoVale: 'Empresas no Lucro Presumido ou Real com operação fiscal mais complexa.', pitchVenda: 'Regras organizadas no sistema ajudam a manter a operação fiscal alinhada à empresa e ao contador.' },
+  m6: { titulo: 'SPED Fiscal / EFD', imagem: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=80', oQueE: 'Recurso para organizar e gerar informações da Escrituração Fiscal Digital.', paraQueServe: 'Reúne dados fiscais da operação para apoiar a entrega dos arquivos exigidos.', quandoVale: 'Empresas obrigadas a entregar arquivos SPED/EFD periodicamente.', pitchVenda: 'A geração integrada reduz a consolidação manual de dados no fechamento fiscal.' },
+  m7: { titulo: 'Nota Fiscal de Serviço (NFS-e)', imagem: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80', oQueE: 'Emissão de notas fiscais de serviço a partir do sistema.', paraQueServe: 'Organiza a emissão de serviços junto à rotina de vendas e gestão.', quandoVale: 'Prestadores de serviço, oficinas e assistências técnicas.', pitchVenda: 'Sua equipe acompanha serviços e emissão fiscal em uma rotina mais centralizada.' },
+  m8: { titulo: 'Conhecimento de Transporte (CT-e)', imagem: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=80', oQueE: 'Emissão de documento fiscal para prestação de serviços de transporte.', paraQueServe: 'Registra informações da operação de transporte de cargas.', quandoVale: 'Transportadoras e distribuidores que emitem CT-e.', pitchVenda: 'A emissão integrada ajuda a manter a documentação da operação junto aos processos da empresa.' },
+  m9: { titulo: 'Manifesto de Cargas (MDF-e)', imagem: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80', oQueE: 'Documento eletrônico que reúne informações dos documentos fiscais transportados.', paraQueServe: 'Organiza dados da carga, do veículo e do transporte para fiscalização.', quandoVale: 'Transportadoras e empresas que precisam emitir MDF-e.', pitchVenda: 'Centralize as informações do transporte para apoiar a preparação da documentação da carga.' },
+  m10: { titulo: 'App Mobile - Vendas', imagem: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=900&q=80', oQueE: 'Aplicativo móvel conectado ao sistema de gestão.', paraQueServe: 'Permite consultar produtos e registrar pedidos pelo celular ou tablet.', quandoVale: 'Vendedores de salão, equipes externas e operações com atendimento móvel.', pitchVenda: 'Sua equipe consulta informações e registra pedidos sem precisar voltar ao computador.' },
+  m11: { titulo: 'Pedido VIP / Força de Vendas Externa', imagem: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=80', oQueE: 'Ferramenta digital de pedidos para clientes ou vendedores externos.', paraQueServe: 'Facilita o envio de pedidos e a consulta das condições comerciais.', quandoVale: 'Atacados e indústrias com vendedores externos ou clientes recorrentes.', pitchVenda: 'Pedidos mais organizados liberam a equipe para focar no relacionamento e nas vendas.' },
+  m12: { titulo: 'Dashboard Web / Indicadores na Nuvem', imagem: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80', oQueE: 'Painel de indicadores acessível pela web.', paraQueServe: 'Apresenta dados de vendas e gestão para acompanhamento da operação.', quandoVale: 'Gestores que precisam acompanhar resultados fora da empresa.', pitchVenda: 'Consulte indicadores importantes da operação mesmo quando estiver longe da loja.' },
+  m13: { titulo: 'Mesas, Comandas e Cozinha', imagem: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80', oQueE: 'Gestão de mesas, comandas e envio de pedidos para a cozinha.', paraQueServe: 'Organiza os pedidos entre salão, caixa e produção.', quandoVale: 'Restaurantes, bares, pizzarias e lanchonetes.', pitchVenda: 'A equipe acompanha os pedidos em um fluxo mais claro entre o salão e a cozinha.' },
+  m14: { titulo: 'Cardápio Digital QR Code', imagem: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=80', oQueE: 'Cardápio digital acessado pelo cliente por QR Code.', paraQueServe: 'Apresenta produtos, imagens e opções em uma página digital.', quandoVale: 'Restaurantes que querem facilitar o acesso ao cardápio e atualizar itens com praticidade.', pitchVenda: 'O cliente acessa o cardápio no próprio celular e encontra os produtos com mais facilidade.' },
+  m15: { titulo: 'Integração iFood e WhatsApp Delivery', imagem: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=900&q=80', oQueE: 'Integração de canais de pedido de delivery com a operação.', paraQueServe: 'Ajuda a centralizar pedidos recebidos por canais digitais.', quandoVale: 'Restaurantes com volume de pedidos em aplicativos e WhatsApp.', pitchVenda: 'Centralizar pedidos reduz alternância entre canais durante os horários de pico.' },
+  m16: { titulo: 'Ordem de Serviço (DAV-OS)', imagem: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=900&q=80', oQueE: 'Registro e acompanhamento de ordens de serviço.', paraQueServe: 'Organiza etapas, itens, mão de obra e histórico dos serviços.', quandoVale: 'Oficinas e assistências técnicas que precisam acompanhar serviços em andamento.', pitchVenda: 'Consulte o histórico do atendimento e acompanhe cada serviço em um só lugar.' },
+  m17: { titulo: 'Integração com Loja Virtual', imagem: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80', oQueE: 'Integração entre a loja virtual e a gestão da operação.', paraQueServe: 'Sincroniza informações como produtos e estoque entre canais.', quandoVale: 'Varejistas que vendem tanto no ponto físico quanto pela internet.', pitchVenda: 'Uma operação conectada facilita acompanhar produtos e pedidos dos diferentes canais.' },
+  m18: { titulo: 'Boletos e Integração Serasa', imagem: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=900&q=80', oQueE: 'Recursos de cobrança e consulta de crédito integrados à gestão.', paraQueServe: 'Apoia a emissão de boletos e a análise de informações de crédito.', quandoVale: 'Lojas e atacadistas que vendem a prazo ou trabalham com cobrança recorrente.', pitchVenda: 'Organize cobranças junto ao cadastro e ao histórico financeiro dos clientes.' },
+  m19: { titulo: 'Fidelidade e Cashback', imagem: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=900&q=80', oQueE: 'Programa de benefícios vinculado às compras dos clientes.', paraQueServe: 'Registra pontos ou cashback para incentivar novas compras.', quandoVale: 'Varejo, mercados e restaurantes que investem em relacionamento recorrente.', pitchVenda: 'Uma estratégia de benefícios ajuda a reconhecer clientes frequentes e estimular o retorno.' }
+};
+
+function showModuleDetails(moduleId) {
+  const item = modulosDetalhes[moduleId];
+  if (!item) return;
+
+  document.getElementById('inspector-placeholder').hidden = true;
+  document.getElementById('inspector-content').hidden = false;
+  const image = document.getElementById('insp-img');
+  image.hidden = false;
+  image.alt = item.titulo;
+  image.onerror = () => { image.hidden = true; };
+  image.src = item.imagem;
+  document.getElementById('insp-titulo').textContent = item.titulo;
+  document.getElementById('insp-oque').textContent = item.oQueE;
+  document.getElementById('insp-paraque').textContent = item.paraQueServe;
+  document.getElementById('insp-quando').textContent = item.quandoVale;
+  document.getElementById('insp-pitch').textContent = item.pitchVenda;
+}
 
 function maskWhatsApp(value = '') {
   const digits = String(value).replace(/\D/g, '').slice(0, 11);
@@ -252,8 +360,8 @@ function render() {
           <div class="form-group">
             <div class="options-grid">
               ${modulosElegiveis.length > 0 ? modulosElegiveis.map(mod => `
-                <label class="option-card ${state.data.modulos[mod.id] ? 'selected' : ''}">
-                  <input type="checkbox" ${state.data.modulos[mod.id] ? 'checked' : ''} onchange="updateModulo('${mod.id}', this.checked); render()">
+                <label class="option-card ${state.data.modulos[mod.id] ? 'selected' : ''}" onmouseenter="showModuleDetails('${mod.id}')" onclick="showModuleDetails('${mod.id}')">
+                  <input type="checkbox" ${state.data.modulos[mod.id] ? 'checked' : ''} onfocus="showModuleDetails('${mod.id}')" onchange="updateModulo('${mod.id}', this.checked); render()">
                   <div class="check-indicator"></div>
                   <div class="option-content">
                     <span class="option-title">${mod.nome}</span>
@@ -444,6 +552,7 @@ function render() {
   }
 
   appContainer.innerHTML = content;
+  updateAttendanceContent();
 }
 
 // Helpers
