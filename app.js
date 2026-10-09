@@ -28,6 +28,13 @@ const state = {
 };
 
 const appContainer = document.getElementById('app-container');
+const shareDialog = document.getElementById('share-dialog');
+const shareDialogTitle = document.getElementById('share-dialog-title');
+const shareDialogFields = document.getElementById('share-dialog-fields');
+const shareDialogStatus = document.getElementById('share-dialog-status');
+const shareCopyAllButton = document.getElementById('share-copy-all');
+const shareOpenTargetButton = document.getElementById('share-open-target');
+let activeShare = null;
 const segmentosScripts = {
   varejo: {
     nome: 'Loja / Varejo',
@@ -624,8 +631,11 @@ function render() {
             ` : ''}
           </div>
 
-          <div class="nav-buttons" style="flex-direction: column;">
+          <div class="summary-actions">
             <button class="btn-primary" onclick="openWhatsApp()">Compartilhar Cotação pelo WhatsApp</button>
+            <button class="btn-secondary" onclick="sendQuoteByEmail()">Enviar por E-mail</button>
+          </div>
+          <div class="nav-buttons" style="flex-direction: column;">
             <button class="btn-secondary" style="border:none; background:transparent;" onclick="resetApp()">Refazer Cotação</button>
           </div>
         </div>
@@ -770,10 +780,9 @@ function calcularERedirecionar() {
 
   state.currentScreen = 7;
   render();
-  setTimeout(openWhatsApp, 1500); // Abre o zap automaticamente após 1.5s
 }
 
-function openWhatsApp() {
+function buildQuoteMessage() {
   const l = state.data.lead;
   const s = state.data;
   const r = state.resultado;
@@ -819,12 +828,145 @@ ${r.modulosConsulta.length > 0 ? `  (Módulos sob consulta técnica: ${r.modulos
 
 Aguardo o envio da proposta formal e o agendamento de uma demonstração!`;
 
-  const numero = "5511999999999"; // Substituir pelo número real
-  const encodedText = encodeURIComponent(texto);
-  const url = `https://api.whatsapp.com/send?phone=${numero}&text=${encodedText}`;
-  
-  window.open(url, '_blank');
+  return texto;
 }
+
+function openWhatsApp() {
+  const numero = "5511999999999"; // Substituir pelo número real
+  const message = buildQuoteMessage();
+  activeShare = {
+    mode: 'whatsapp',
+    fields: [{ label: 'Mensagem para o WhatsApp', value: message, multiline: true }],
+    copyAll: message,
+    targetUrl: `https://api.whatsapp.com/send?phone=${numero}&text=${encodeURIComponent(message)}`
+  };
+  showShareDialog();
+}
+
+function sendQuoteByEmail() {
+  const lead = state.data.lead;
+  if (!lead.email.trim()) {
+    alert('Informe o e-mail na etapa anterior para preparar o envio da cotação.');
+    return;
+  }
+
+  const subject = `Cotação comercial i3 Sistemas - ${lead.empresa || lead.nome}`;
+  const message = buildQuoteMessage();
+  const recipient = lead.email.trim();
+  activeShare = {
+    mode: 'email',
+    fields: [
+      { label: 'E-mail do cliente', value: recipient },
+      { label: 'Assunto', value: subject },
+      { label: 'Texto do e-mail', value: message, multiline: true }
+    ],
+    copyAll: `E-mail do cliente:\n${recipient}\n\nAssunto:\n${subject}\n\nTexto do e-mail:\n${message}`,
+    targetUrl: `mailto:${encodeURIComponent(recipient).replace(/%40/gi, '@')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+  };
+  showShareDialog();
+}
+
+function showShareDialog() {
+  shareDialogTitle.textContent = activeShare.mode === 'email'
+    ? 'Enviar cotação por e-mail'
+    : 'Compartilhar cotação pelo WhatsApp';
+  shareOpenTargetButton.textContent = activeShare.mode === 'email'
+    ? 'Abrir aplicativo de e-mail'
+    : 'Abrir WhatsApp';
+  shareDialogStatus.textContent = '';
+  shareDialogFields.replaceChildren();
+
+  activeShare.fields.forEach((field, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'share-field';
+
+    const label = document.createElement('label');
+    const fieldId = `share-field-${index}`;
+    label.className = 'share-field-label';
+    label.htmlFor = fieldId;
+    label.textContent = field.label;
+
+    const value = document.createElement(field.multiline ? 'textarea' : 'input');
+    value.id = fieldId;
+    value.className = 'share-field-value';
+    value.readOnly = true;
+    value.value = field.value;
+    if (field.multiline) value.rows = field.label === 'Texto do e-mail' ? 9 : 12;
+
+    const copyButton = document.createElement('button');
+    copyButton.className = 'share-copy-field';
+    copyButton.type = 'button';
+    copyButton.textContent = 'Copiar';
+    copyButton.setAttribute('aria-label', `Copiar ${field.label}`);
+    copyButton.addEventListener('click', () => copyShareText(field.value, field.label));
+
+    wrapper.append(label, value, copyButton);
+    shareDialogFields.append(wrapper);
+  });
+
+  shareDialog.showModal();
+}
+
+async function copyShareText(text, label) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      copyShareTextFallback(text);
+    }
+    shareDialogStatus.textContent = `${label} copiado.`;
+  } catch {
+    try {
+      copyShareTextFallback(text);
+      shareDialogStatus.textContent = `${label} copiado.`;
+    } catch {
+      shareDialogStatus.textContent = 'Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.';
+    }
+  }
+}
+
+function copyShareTextFallback(text) {
+  const temporaryField = document.createElement('textarea');
+  temporaryField.value = text;
+  temporaryField.setAttribute('readonly', '');
+  temporaryField.style.position = 'fixed';
+  temporaryField.style.opacity = '0';
+  document.body.append(temporaryField);
+  temporaryField.select();
+  const copied = document.execCommand('copy');
+  temporaryField.remove();
+  if (!copied) throw new Error('Clipboard unavailable');
+}
+
+shareCopyAllButton.addEventListener('click', () => {
+  copyShareText(activeShare.copyAll, 'Conteúdo');
+});
+
+shareOpenTargetButton.addEventListener('click', () => {
+  if (activeShare.mode === 'email') {
+    window.location.href = activeShare.targetUrl;
+  } else {
+    window.open(activeShare.targetUrl, '_blank', 'noopener,noreferrer');
+  }
+  shareDialog.close();
+});
+
+document.getElementById('share-dialog-close').addEventListener('click', () => shareDialog.close());
+shareDialog.addEventListener('click', event => {
+  if (event.target === shareDialog) shareDialog.close();
+});
+
+shareDialog.addEventListener('close', () => {
+  shareDialogStatus.textContent = '';
+  shareDialogFields.replaceChildren();
+  activeShare = null;
+});
+
+shareDialog.addEventListener('cancel', () => {
+  activeShare = null;
+  shareDialogStatus.textContent = '';
+  shareDialogFields.replaceChildren();
+});
 
 // Inicializa a App
 render();

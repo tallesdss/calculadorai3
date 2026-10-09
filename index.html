@@ -38,6 +38,23 @@
       </aside>
     </div>
   </div>
+  <dialog id="share-dialog" class="share-dialog" aria-labelledby="share-dialog-title">
+    <section class="share-dialog-panel">
+      <header class="share-dialog-header">
+        <div>
+          <span class="share-dialog-eyebrow">Compartilhamento</span>
+          <h2 id="share-dialog-title">Preparar mensagem</h2>
+        </div>
+        <button id="share-dialog-close" class="share-close" type="button" aria-label="Fechar janela">×</button>
+      </header>
+      <div id="share-dialog-fields" class="share-dialog-fields"></div>
+      <p id="share-dialog-status" class="share-dialog-status" role="status" aria-live="polite"></p>
+      <footer class="share-dialog-actions">
+        <button id="share-copy-all" class="btn-secondary" type="button">Copiar tudo</button>
+        <button id="share-open-target" class="btn-primary" type="button">Abrir aplicativo</button>
+      </footer>
+    </section>
+  </dialog>
   <script src="app.js"></script>
 </body>
 </html>
