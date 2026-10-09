@@ -575,7 +575,7 @@ function render() {
         <div class="screen">
           ${renderProgress(7, 7)}
           <div style="background: var(--c-green); color: white; padding: 12px; border-radius: var(--r-md); font-size: var(--fs-sm); font-weight: 700; text-align: center; margin-bottom: 20px;">
-            Cotação calculada com sucesso! A abrir a sua conversa no WhatsApp...
+            Cotação calculada com sucesso! Compartilhe a proposta ou agende uma reunião.
           </div>
           
           <div class="glass-card" style="margin-bottom: 16px;">
@@ -634,6 +634,7 @@ function render() {
           <div class="summary-actions">
             <button class="btn-primary" onclick="openWhatsApp()">Compartilhar Cotação pelo WhatsApp</button>
             <button class="btn-secondary" onclick="sendQuoteByEmail()">Enviar por E-mail</button>
+            <button class="btn-secondary" onclick="scheduleMeeting()">Agendar Reunião</button>
           </div>
           <div class="nav-buttons" style="flex-direction: column;">
             <button class="btn-secondary" style="border:none; background:transparent;" onclick="resetApp()">Refazer Cotação</button>
@@ -831,6 +832,76 @@ Aguardo o envio da proposta formal e o agendamento de uma demonstração!`;
   return texto;
 }
 
+function formatMeetingCurrency(value) {
+  return `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
+}
+
+function buildMeetingMessage(date, time) {
+  const lead = state.data.lead;
+  const result = state.resultado;
+  const firstName = lead.nome.trim().split(/\s+/)[0] || 'tudo bem';
+  const segmentLabels = {
+    varejo: 'Loja / Varejo',
+    supermercado: 'Supermercado / Mercado / Mercearia',
+    atacado: 'Distribuidora / Atacado',
+    food: 'Restaurante / Bar / Pizzaria / Lanchonete',
+    oficina: 'Oficina / Assistência',
+    servicos: 'Prestador de Serviços',
+    transporte: 'Transportadora',
+    industria: 'Indústria'
+  };
+  const regimeLabels = {
+    mei: 'MEI',
+    simples: 'Simples Nacional',
+    normal: 'Lucro Presumido ou Real',
+    nsei: 'Ainda não informado'
+  };
+  const dateLabel = new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const [hour, minute] = time.split(':');
+  const timeLabel = `${Number(hour)}h${minute}`;
+  const planName = result.nomePlano.replace(/\s*\(([^)]+)\)$/, ' — $1');
+  const moduleLines = modulosData
+    .filter(module => module.id !== 'm14' && state.data.modulos[module.id])
+    .map(module => {
+      if (module.consulta) return `• ${module.nome}: sob consulta`;
+      const licenses = module.id === 'm10' ? Number(state.data.usuarios) || 1 : 1;
+      return `• ${module.nome}: ${formatMeetingCurrency(module.preco * licenses)}/mês`;
+    });
+
+  if (result.planoCardapio) {
+    moduleLines.push(`• Cardápio Digital QR Code — ${result.planoCardapio.nome}: ${formatMeetingCurrency(result.planoCardapio.valor)}/mês`);
+  }
+
+  return `Olá, ${firstName}! Tudo certo? 😊
+
+Consegui encaixar sua demonstração na agenda de um dos nossos especialistas! Seguem os detalhes:
+
+📅 **Data:** ${dateLabel}
+🕓 **Horário:** ${timeLabel}
+
+🏢 **DADOS DA SUA EMPRESA**
+• Empresa: ${lead.empresa || 'Não informada'}
+• Segmento: ${segmentLabels[state.data.segmento] || state.data.segmento}
+• Regime tributário: ${regimeLabels[state.data.regime] || state.data.regime}
+• Usuários: ${state.data.usuarios}
+
+📦 **SOLUÇÃO INDICADA**
+• Plano ${planName}: ${formatMeetingCurrency(result.valorPlano)}/mês
+${moduleLines.length ? moduleLines.join('\n') : '• Sem módulos adicionais'}
+
+💰 **Investimento mensal estimado: ${formatMeetingCurrency(result.totalCalculado)}**
+
+Na demonstração, nosso especialista vai apresentar o sistema e mostrar como ele pode ajudar na gestão do seu negócio.
+
+📞 Antes da visita, vou te ligar para confirmar tudo certinho.
+
+Obrigado pela oportunidade, ${firstName}! Até lá! 🤝`;
+}
+
 function openWhatsApp() {
   const numero = "5511999999999"; // Substituir pelo número real
   const message = buildQuoteMessage();
@@ -866,13 +937,52 @@ function sendQuoteByEmail() {
   showShareDialog();
 }
 
+function scheduleMeeting() {
+  activeShare = {
+    mode: 'meeting',
+    fields: [
+      { label: 'Data da reunião', value: '', inputType: 'date' },
+      { label: 'Horário da reunião', value: '', inputType: 'time' },
+      { label: 'Convite e detalhes da cotação', value: '', multiline: true }
+    ],
+    copyAll: ''
+  };
+  showShareDialog();
+}
+
+function updateMeetingDraft() {
+  if (!activeShare || activeShare.mode !== 'meeting') return;
+
+  const [dateField, timeField, messageField] = activeShare.fields;
+  const message = dateField.value && timeField.value
+    ? buildMeetingMessage(dateField.value, timeField.value)
+    : 'Selecione a data e o horário da reunião para gerar o convite com os detalhes da cotação.';
+  messageField.value = message;
+  activeShare.copyAll = dateField.value && timeField.value ? message : '';
+
+  const messageInput = shareDialogFields.querySelector(`#share-field-${activeShare.fields.indexOf(messageField)}`);
+  if (messageInput) messageInput.value = message;
+
+  const canCopy = Boolean(dateField.value && timeField.value);
+  shareCopyAllButton.disabled = !canCopy;
+  if (messageField.copyButton) messageField.copyButton.disabled = !canCopy;
+  shareDialogStatus.textContent = canCopy ? '' : 'Selecione a data e o horário para copiar o convite.';
+}
+
 function showShareDialog() {
+  const isMeeting = activeShare.mode === 'meeting';
   shareDialogTitle.textContent = activeShare.mode === 'email'
     ? 'Enviar cotação por e-mail'
-    : 'Compartilhar cotação pelo WhatsApp';
+    : isMeeting ? 'Agendar reunião' : 'Compartilhar cotação pelo WhatsApp';
+  shareDialog.querySelector('.share-dialog-eyebrow').textContent = isMeeting
+    ? 'Reunião comercial'
+    : 'Compartilhamento';
+  shareCopyAllButton.textContent = isMeeting ? 'Copiar convite e cotação' : 'Copiar tudo';
+  shareCopyAllButton.disabled = isMeeting;
   shareOpenTargetButton.textContent = activeShare.mode === 'email'
     ? 'Abrir aplicativo de e-mail'
     : 'Abrir WhatsApp';
+  shareOpenTargetButton.hidden = isMeeting;
   shareDialogStatus.textContent = '';
   shareDialogFields.replaceChildren();
 
@@ -889,7 +999,16 @@ function showShareDialog() {
     const value = document.createElement(field.multiline ? 'textarea' : 'input');
     value.id = fieldId;
     value.className = 'share-field-value';
-    value.readOnly = true;
+    if (field.inputType) {
+      value.type = field.inputType;
+      value.required = true;
+      value.addEventListener('input', () => {
+        field.value = value.value;
+        updateMeetingDraft();
+      });
+    } else {
+      value.readOnly = true;
+    }
     value.value = field.value;
     if (field.multiline) value.rows = field.label === 'Texto do e-mail' ? 9 : 12;
 
@@ -899,11 +1018,13 @@ function showShareDialog() {
     copyButton.textContent = 'Copiar';
     copyButton.setAttribute('aria-label', `Copiar ${field.label}`);
     copyButton.addEventListener('click', () => copyShareText(field.value, field.label));
+    field.copyButton = copyButton;
 
     wrapper.append(label, value, copyButton);
     shareDialogFields.append(wrapper);
   });
 
+  if (isMeeting) updateMeetingDraft();
   shareDialog.showModal();
 }
 
@@ -939,6 +1060,7 @@ function copyShareTextFallback(text) {
 }
 
 shareCopyAllButton.addEventListener('click', () => {
+  if (!activeShare || (activeShare.mode === 'meeting' && !activeShare.copyAll)) return;
   copyShareText(activeShare.copyAll, 'Conteúdo');
 });
 
