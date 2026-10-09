@@ -91,9 +91,26 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--green-900);
 }
 
-.attendance-bar h1 {
-  margin: 0 0 16px;
-  font-size: var(--fs-lg);
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.attendance-title {
+  margin: 0;
+  color: var(--income);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.attendance-status {
+  color: var(--on-dark-muted);
+  font-size: var(--fs-xs);
+  text-align: right;
 }
 
 .attendance-tabs {
@@ -127,6 +144,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .attendance-content {
   max-width: 90ch;
+  min-height: 80px;
   margin: 0;
   padding: 12px 14px;
   border-left: 3px solid var(--lime);
@@ -135,6 +153,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   color: var(--on-dark);
   font-size: var(--fs-sm);
   line-height: 1.65;
+  white-space: pre-line;
 }
 
 .main-grid {
@@ -508,6 +527,16 @@ input[type="range"]::-webkit-slider-runnable-track {
   .body,
   .side-panel {
     padding: 20px;
+  }
+
+  .attendance-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .attendance-status {
+    text-align: left;
   }
 
   .side-panel {

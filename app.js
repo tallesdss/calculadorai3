@@ -28,48 +28,109 @@ const state = {
 };
 
 const appContainer = document.getElementById('app-container');
+const segmentosScripts = {
+  varejo: {
+    nome: 'Loja / Varejo',
+    ativa: `GATILHO DE ATENÇÃO: Falta de controle de grade (tamanhos/cores) e lentidão no caixa.\n\n"Olá, [Nome do Responsável], tudo bem? Aqui é da i3 Sistemas! Atendemos lojas de varejo que precisam controlar estoque por tamanho e cor sem perder horas contando peças. Quando um cliente pede um item, sua equipe consulta o estoque pelo sistema ou precisa procurar no depósito? Quantos caixas ou vendedores operam hoje?`,
+    recebida: `POSTURA DE AUTORIDADE: Qualificação rápida de balcão e retaguarda.\n\n"i3 Sistemas, bom dia/boa tarde! Com quem tenho o prazer de falar? Qual é o segmento da sua loja? Quem nos procura no varejo geralmente quer agilizar o balcão e evitar furos de estoque. Qual é hoje a maior dificuldade com o sistema atual?`,
+    whatsapp: `Olá! Tudo bem? Aqui é da equipe i3 Sistemas.\n\nAjudamos lojas com controle de grade por cor e tamanho, comissão de vendedores e emissão ágil de NFC-e.\n\nQual é hoje o maior desafio da sua loja: estoque, fechamento de caixa ou lentidão no sistema?`,
+    presencial: `"Boa tarde! Vim conhecer a loja. Como vocês controlam o estoque por tamanho e cor e acompanham a comissão dos vendedores? O fechamento do dia ainda depende de papel e planilha?"`
+  },
+  supermercado: {
+    nome: 'Supermercado / Mercado / Mercearia',
+    ativa: `GATILHO DE ATENÇÃO: Filas nos horários de pico, tributação de produtos e conferência de Pix.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! Mercados precisam de um PDV ágil para evitar filas, especialmente nos horários de pico. Vocês já usam importação de XML e TEF/Pix integrado no caixa ou ainda conferem pagamentos manualmente?`,
+    recebida: `POSTURA DE AUTORIDADE: Identificação de escala e periféricos.\n\n"i3 Sistemas, tudo bem? Em mercados, cada segundo no caixa conta para evitar filas. Quantos checkouts vocês operam? Usam balança integrada ou etiquetadora no açougue e hortifrúti?`,
+    whatsapp: `Olá! Que bom ter você por aqui.\n\nNosso PDV para mercados oferece leitura de código de barras e integração com balanças, TEF e Pix dinâmico no caixa.\n\nQuantos caixas de atendimento estão em operação hoje?`,
+    presencial: `"Boa tarde! Como o sistema responde nos horários de pico? O PDV continua funcionando quando a internet oscila? Podemos conversar sobre contingência, integração com balanças e velocidade no caixa."`
+  },
+  atacado: {
+    nome: 'Distribuidora / Atacado',
+    ativa: `GATILHO DE ATENÇÃO: Faturamento em lote, expedição e pedidos externos.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! Atendemos distribuidoras que precisam agilizar o faturamento e a liberação de cargas. Seus vendedores fazem pedidos por aplicativo ou enviam fotos de talões para a retaguarda digitar?`,
+    recebida: `POSTURA DE AUTORIDADE: Foco em logística e força de vendas.\n\n"i3 Sistemas, prazer em falar com você. Na distribuição, é importante sincronizar estoque, faturamento e financeiro. Vocês precisam emitir NF-e em lote e controlar limite de crédito, ou buscam principalmente força de vendas externa?`,
+    whatsapp: `Olá! Seja bem-vindo à i3 Sistemas.\n\nPara distribuidoras e atacadistas, temos recursos para vendedores externos, emissão de NF-e em lote, romaneio, MDF-e e contas a receber.\n\nSua equipe vende externamente ou atende pedidos internos e de balcão?`,
+    presencial: `"Boa tarde! Como funciona hoje o processo entre fechar um pedido e liberar a mercadoria na expedição? Quanto tempo a equipe gasta redigitando pedidos ou separando cargas manualmente?"`
+  },
+  food: {
+    nome: 'Restaurante / Bar / Pizzaria / Lanchonete',
+    ativa: `GATILHO DE ATENÇÃO: Erros de anotação, demora na cozinha e operação de delivery.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! Em horários movimentados, pedidos podem demorar ou chegar incorretos à cozinha. Com a solução Master Foods, o garçom registra a comanda pelo celular e o pedido segue para a produção. Como vocês controlam mesas, comandas e delivery hoje?`,
+    recebida: `POSTURA DE AUTORIDADE: Divisão do fluxo entre salão e delivery.\n\n"i3 Sistemas, prazer em atender você. Para alimentação temos comanda mobile, mapa de mesas, impressão por setor e recursos de delivery. Sua maior demanda está no salão, no balcão ou nas entregas?`,
+    whatsapp: `Olá! Tudo bem?\n\nA solução i3 para alimentação inclui:\n• Comanda mobile para garçons\n• Impressão de pedidos na cozinha e no bar\n• Cardápio digital por QR Code\n\nSua operação trabalha mais com mesas, balcão ou delivery?`,
+    presencial: `"Boa tarde! Como funciona a comunicação entre o salão e a cozinha nos horários de pico? Os pedidos chegam por impressora ou tablet, ou a equipe ainda leva comandas de papel?"`
+  },
+  oficina: {
+    nome: 'Oficina / Assistência Técnica',
+    ativa: `GATILHO DE ATENÇÃO: Controle de peças, mão de obra e ordens de serviço.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! Oficinas precisam organizar peças, serviços e documentos fiscais sem alternar entre vários programas. Como vocês registram e acompanham as ordens de serviço atualmente?`,
+    recebida: `POSTURA DE AUTORIDADE: Peças versus mão de obra.\n\n"i3 Sistemas, que bom que ligou. Para oficinas e assistências, é importante acompanhar o status do serviço e o histórico do cliente. Vocês também vendem peças e acessórios no balcão?`,
+    whatsapp: `Olá! Tudo bem?\n\nNosso sistema para oficinas e assistências oferece:\n• Ordem de serviço e envio de orçamento\n• Controle de peças e histórico de atendimento\n• Organização da emissão fiscal de produtos e serviços\n\nHoje vocês usam papel ou um sistema para controlar as OSs?`,
+    presencial: `"Boa tarde! Quando um cliente pergunta pelo andamento do serviço ou pelo histórico de uma revisão, sua equipe encontra a informação rapidamente no sistema ou precisa procurar uma pasta física?"`
+  },
+  servicos: {
+    nome: 'Prestador de Serviços',
+    ativa: `GATILHO DE ATENÇÃO: Emissão de NFS-e e organização de cobranças recorrentes.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! Muitos prestadores perdem tempo emitindo notas no portal da prefeitura e conferindo pagamentos manualmente. Como vocês fazem hoje a gestão de cobrança e das notas de serviço?`,
+    recebida: `POSTURA DE AUTORIDADE: Frequência de faturamento.\n\n"i3 Sistemas, bom dia/boa tarde! No ramo de serviços, agilidade na emissão de NFS-e e organização financeira fazem diferença. Que tipo de serviço sua empresa presta e qual é a maior dificuldade com o sistema atual?`,
+    whatsapp: `Olá! Tudo bem?\n\nPara empresas de serviços, a i3 oferece emissão de NFS-e integrada e recursos para organizar contratos e contas a receber.\n\nQual é o volume médio de notas fiscais emitidas por mês?`,
+    presencial: `"Boa tarde! Como está o controle de cobranças e inadimplência? Quanto tempo a equipe dedica à emissão de notas no portal da prefeitura em vez de atender clientes?"`
+  },
+  transporte: {
+    nome: 'Transportadora / Cargas',
+    ativa: `GATILHO DE ATENÇÃO: Agilidade na emissão de CT-e e MDF-e para liberar cargas.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! No transporte, um veículo aguardando documentação pode atrasar a operação. Como vocês emitem CT-e e MDF-e e organizam a liberação dos romaneios dos motoristas?`,
+    recebida: `POSTURA DE AUTORIDADE: Modal e documentação.\n\n"i3 Sistemas, prazer em falar com você. No setor de logística, a emissão ágil de CT-e e MDF-e ajuda a manter as cargas em movimento. Quantos veículos estão em operação na frota hoje?`,
+    whatsapp: `Olá! Tudo bem?\n\nPara transporte e logística, temos recursos para emissão de CT-e e MDF-e e organização da documentação de cargas.\n\nVocês transportam cargas próprias ou prestam serviço de frete para terceiros?`,
+    presencial: `"Boa tarde! Quanto tempo os motoristas aguardam pela emissão dos documentos antes de seguir viagem? Como a equipe prepara hoje o romaneio e o manifesto das cargas?"`
+  },
+  industria: {
+    nome: 'Indústria / Outro Segmento',
+    ativa: `GATILHO DE ATENÇÃO: Controle de matéria-prima e custo de produção.\n\n"Olá, tudo bem? Aqui é da i3 Sistemas! Muitas indústrias precisam acompanhar o consumo de matéria-prima e o custo real do produto fabricado. Como vocês registram a produção e atualizam o estoque de insumos e produtos acabados?`,
+    recebida: `POSTURA DE AUTORIDADE: Ficha técnica e produção.\n\n"i3 Sistemas, bom dia/boa tarde! Na indústria, a ficha técnica e as regras fiscais são importantes para controlar a operação. Qual produto vocês fabricam e qual é o principal gargalo entre a produção e a expedição?`,
+    whatsapp: `Olá! Tudo bem?\n\nPara indústrias, a i3 oferece recursos para organizar produção, consumo de insumos, custos e emissão fiscal.\n\nVocês produzem sob encomenda ou mantêm estoque de pronta-entrega?`,
+    presencial: `"Boa tarde! Como a equipe de vendas consulta o que já está disponível para faturamento sem precisar ir até o galpão conferir com a produção?"`
+  }
+};
+
 const attendanceScriptsByScreen = {
   1: {
-    ligacao: 'Pergunte o segmento com entusiasmo. Explique que o sistema i3 é modular e não força o cliente a pagar por recursos que não usa.',
-    online: 'Olá! Para montar a proposta ideal, qual é o segmento da sua empresa hoje? Loja, mercado, restaurante, oficina ou serviço?',
+    ligacao: 'Selecione o segmento da empresa para carregar os gatilhos de abordagem específicos.',
+    whatsapp: 'Olá! Para montar a proposta ideal, qual é o segmento da sua empresa hoje?',
     presencial: 'Observe a operação e pergunte quais produtos têm maior giro. Mostre como uma tela de venda rápida pode evitar filas.'
   },
   2: {
     ligacao: 'Pergunte o regime tributário: MEI, Simples ou Normal. Explore como a importação de XML e a tributação automática podem ajudar.',
-    online: 'Qual é o regime fiscal da empresa: MEI, Simples Nacional ou Lucro Presumido/Real? Essa informação ajuda a indicar a configuração certa.',
+    whatsapp: 'Qual é o regime fiscal da empresa: MEI, Simples Nacional ou Lucro Presumido/Real? Essa informação ajuda a indicar a configuração certa.',
     presencial: 'Converse sobre as regras fiscais da empresa e mostre como o sistema ajuda a reduzir erros na rotina tributária.'
   },
   3: {
     ligacao: 'Descubra se a principal necessidade é emitir notas, controlar estoque ou acompanhar o financeiro. Confirme quantos usuários operarão o sistema.',
-    online: 'O que mais toma tempo hoje: emitir notas, controlar estoque ou conferir o caixa? Quantas pessoas vão usar o sistema?',
+    whatsapp: 'O que mais toma tempo hoje: emitir notas, controlar estoque ou conferir o caixa? Quantas pessoas vão usar o sistema?',
     presencial: 'Entenda a rotina de cada operador e destaque o controle de acesso para ações como cancelamentos, sangrias e descontos.'
   },
   4: {
     ligacao: 'Apresente Pix e TEF para agilizar o caixa e reduzir erros de conferência. Para restaurantes, pergunte sobre comandas e pedidos.',
-    online: 'Vamos avaliar os recursos compatíveis com sua operação. Pix integrado e TEF, por exemplo, podem agilizar o caixa e facilitar a conferência.',
+    whatsapp: 'Vamos avaliar os recursos compatíveis com sua operação. Pix integrado e TEF, por exemplo, podem agilizar o caixa e facilitar a conferência.',
     presencial: 'Observe os meios de pagamento e explique como a integração do TEF reduz a conferência manual das vendas.'
   },
   5: {
     ligacao: 'Apresente as opções de cardápio digital e relacione os recursos do plano escolhido à rotina do estabelecimento.',
-    online: 'Escolha o plano de Cardápio Digital QR Code mais adequado. Posso ajudar a comparar os recursos de cada opção.',
+    whatsapp: 'Escolha o plano de Cardápio Digital QR Code mais adequado. Posso ajudar a comparar os recursos de cada opção.',
     presencial: 'Mostre no celular como o cliente navega pelo cardápio digital e como fotos dos itens podem apoiar a escolha.'
   },
   6: {
     ligacao: 'Confirme os dados para preparar a proposta e combine o próximo contato ou uma demonstração do sistema.',
-    online: 'Preencha seus dados para receber o resumo da proposta e os valores estimados pelo WhatsApp.',
+    whatsapp: 'Preencha seus dados para receber o resumo da proposta e os valores estimados pelo WhatsApp.',
     presencial: 'Confirme os dados do cliente, formalize o orçamento e alinhe os próximos passos da implantação.'
   },
   7: {
     ligacao: 'Apresente o valor estimado, valide os módulos e pergunte se podemos agendar uma demonstração ou instalação.',
-    online: 'A proposta está pronta. Use o botão para abrir o WhatsApp e enviar o resumo ao atendimento comercial.',
+    whatsapp: 'A proposta está pronta. Use o botão para abrir o WhatsApp e enviar o resumo ao atendimento comercial.',
     presencial: 'Revise a proposta com o cliente, relacione os recursos às necessidades levantadas e combine o próximo passo.'
   }
 };
-let currentAttendanceTab = 'ligacao';
+let currentAttendanceTab = 'ativa';
 const attendanceTabs = [...document.querySelectorAll('[data-attendance-tab]')];
 const attendanceContent = document.getElementById('attendance-content');
+const attendanceStatus = document.getElementById('attendance-status');
 
 function selectAttendanceTab(tabName) {
+  if (!['ativa', 'recebida', 'whatsapp', 'presencial'].includes(tabName)) return;
   currentAttendanceTab = tabName;
   attendanceTabs.forEach(tab => {
     const selected = tab.dataset.attendanceTab === tabName;
@@ -81,8 +142,27 @@ function selectAttendanceTab(tabName) {
 }
 
 function updateAttendanceContent() {
+  if (!attendanceContent) return;
+
+  if (state.currentScreen === 1) {
+    const segmento = segmentosScripts[state.data.segmento];
+    if (!segmento) {
+      if (attendanceStatus) attendanceStatus.textContent = 'Tela 1 • Selecione um segmento';
+      attendanceContent.textContent = 'Selecione um segmento abaixo para carregar o roteiro de abordagem comercial.';
+      return;
+    }
+
+    if (attendanceStatus) attendanceStatus.textContent = `Tela 1 • Roteiro: ${segmento.nome}`;
+    attendanceContent.textContent = segmento[currentAttendanceTab];
+    return;
+  }
+
+  if (attendanceStatus) attendanceStatus.textContent = `Tela ${state.currentScreen} • Condução Comercial`;
   const screenScripts = attendanceScriptsByScreen[state.currentScreen] || attendanceScriptsByScreen[1];
-  attendanceContent.textContent = screenScripts[currentAttendanceTab];
+  const channel = currentAttendanceTab === 'ativa' || currentAttendanceTab === 'recebida'
+    ? 'ligacao'
+    : currentAttendanceTab;
+  attendanceContent.textContent = screenScripts[channel] || 'Acompanhe as opções com o cliente para avançar a cotação.';
 }
 
 attendanceTabs.forEach((tab, index) => {
@@ -260,13 +340,16 @@ function render() {
               { id: 'industria', label: 'Indústria / Outro Segmento' }
             ].map(opt => `
               <label class="option-card ${state.data.segmento === opt.id ? 'selected' : ''}">
-                <input type="radio" name="segmento" value="${opt.id}" ${state.data.segmento === opt.id ? 'checked' : ''} onchange="updateState('segmento', this.value); nextScreen()">
+                <input type="radio" name="segmento" value="${opt.id}" ${state.data.segmento === opt.id ? 'checked' : ''} onchange="updateState('segmento', this.value); render()">
                 <div class="check-indicator"></div>
                 <div class="option-content">
                   <span class="option-title">${opt.label}</span>
                 </div>
               </label>
             `).join('')}
+          </div>
+          <div class="nav-buttons">
+            <button class="btn-primary" onclick="nextScreen()" ${!state.data.segmento ? 'disabled' : ''}>Avançar</button>
           </div>
         </div>
       `;

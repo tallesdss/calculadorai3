@@ -10,13 +10,17 @@
 <body>
   <div class="app-wrapper">
     <section class="attendance-bar" aria-labelledby="attendance-title">
-      <h1 id="attendance-title">Atendimento</h1>
+      <div class="attendance-header">
+        <h1 id="attendance-title" class="attendance-title">Assistente Comercial i3</h1>
+        <span id="attendance-status" class="attendance-status">Tela 1 • Selecione um segmento</span>
+      </div>
       <div class="attendance-tabs" role="tablist" aria-label="Canal de atendimento">
-        <button id="tab-ligacao" class="attendance-tab" type="button" role="tab" aria-selected="true" aria-controls="attendance-content" data-attendance-tab="ligacao">Ligação</button>
-        <button id="tab-online" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="online" tabindex="-1">WhatsApp</button>
+        <button id="tab-ativa" class="attendance-tab" type="button" role="tab" aria-selected="true" aria-controls="attendance-content" data-attendance-tab="ativa">Ligação Ativa</button>
+        <button id="tab-recebida" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="recebida" tabindex="-1">Ligação Recebida</button>
+        <button id="tab-whatsapp" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="whatsapp" tabindex="-1">WhatsApp</button>
         <button id="tab-presencial" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="presencial" tabindex="-1">Presencial</button>
       </div>
-      <p id="attendance-content" class="attendance-content" role="tabpanel" aria-live="polite" aria-labelledby="tab-ligacao"></p>
+      <div id="attendance-content" class="attendance-content" role="tabpanel" aria-live="polite" aria-labelledby="tab-ativa">Selecione um segmento abaixo para carregar o roteiro de abordagem comercial.</div>
     </section>
 
     <div class="main-grid">
