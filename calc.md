@@ -121,16 +121,14 @@ Este documento reúne a arquitetura funcional, regras de exibição condicional,
 
 ### TELA 6: RESUMO DA COTAÇÃO & REDIRECIONAMENTO
 * Alerta de Topo: "Cotação calculada com sucesso! A abrir a sua conversa no WhatsApp..."
+* Exibir duas abas abaixo do alerta:
+  - Offline com Backup: plano desktop, usuários extras e módulos adicionais.
+  - WEB: pacote em nuvem e usuários extras; não exibir nem cobrar módulos da Tela 4.
 * Bloco 1: Perfil Diagnosticado
   - Segmento | Regime Tributário | Quantidade de Usuários
-* Bloco 2: Solução Indicada
-  - Nome do Plano Base (com lista de funções inclusas)
-  - Módulos adicionais contratados
-* Bloco 3: Discriminação Financeira Mensal
-  - Subtotal Plano Base: R$ [Valor]
-  - Subtotal Usuários Extras: R$ [Valor]
-  - Subtotal Módulos Adicionais: R$ [Valor]
-  - Mensalidade Estimada: R$ [Total]/mês
+* Em cada aba, exibir a solução e discriminação financeira correspondentes.
+* A aba WEB lista os recursos incluídos no pacote, mas não módulos/integrações da Tela 4.
+* A aba Offline discrimina plano base, usuários extras, módulos adicionais e total mensal.
 * Botão de Suporte (Caso o WhatsApp não abra automaticamente):
   [ Receba a cotação pelo WhatsApp ]
 
@@ -168,6 +166,16 @@ Este documento reúne a arquitetura funcional, regras de exibição condicional,
 * Dashboard Web: R$ 60,00
 * Recursos sob consulta (MDF-e, Pedido VIP, Anota AI, Serasa, Boletos, etc.): Não somam valores numéricos no cálculo automático; são encaminhados para cotação do consultor.
 
+### 3.4. Planos WEB (Nuvem)
+* Transporte de Carga: R$ 180,00/mês, se o segmento for transporte.
+* Plano MEI: R$ 120,00/mês, se o regime for MEI.
+* Nota Fiscal Consumidor: R$ 120,00/mês, para necessidade fiscal nos segmentos varejo, supermercado ou food.
+* Plano Nota Fiscal Eletrônica: R$ 120,00/mês, para as demais necessidades fiscais.
+* Gestão de Estoque Fiscal e Financeiro: R$ 160,00/mês nos demais casos.
+* Usuários extras WEB: R$ 20,00 por usuário acima do primeiro.
+* Fórmula: total WEB = valor do plano WEB + valor dos usuários extras WEB.
+* Módulos, integrações e cardápio selecionados na Tela 4 são exclusivos do Offline e nunca alteram nem aparecem como adicionais no cálculo WEB.
+
 ---
 
 ## 4. INTEGRAÇÃO E DISPARO DE MENSAGEM NO WHATSAPP
@@ -186,14 +194,17 @@ Acabei de efetuar a simulação na calculadora do vosso site e solicito a minha 
 • Regime Tributário: {regime}
 • Usuários: {total_usuarios} utilizador(es) ({extras} extra(s))
 
-📦 PROPOSTA DIAGNOSTICADA:
-• Plano Base: {nome_plano} (R$ {valor_plano})
-• Usuários Extras: {extras} un. (R$ {valor_extras})
-• Módulos Selecionados:
-  - {modulo_1} (R$ {valor_modulo_1})
-  - {modulo_2} (R$ {valor_modulo_2})
-  (Módulos sob consulta técnica: {modulos_consulta})
+📦 PROPOSTA OFFLINE COM BACKUP:
+• Plano Base: {nome_plano_offline} (R$ {valor_plano_offline})
+• Usuários Extras: {extras} un. (R$ {valor_extras_offline})
+• Módulos e integrações: {modulos_offline}
+• Total Offline estimado: R$ {total_offline}/mês
 
-💰 TOTAL ESTIMADO: R$ {total_calculado}/mês
+☁️ PROPOSTA WEB:
+• Plano: {nome_plano_web} (R$ {valor_plano_web})
+• Usuários Extras: {extras} un. (R$ {valor_extras_web})
+• Total Web estimado: R$ {total_web}/mês
+
+Os módulos e integrações da Tela 4 não são listados nem cobrados na proposta WEB.
 
 Aguardo o envio da proposta formal e o agendamento de uma demonstração!

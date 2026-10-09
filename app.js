@@ -1,30 +1,55 @@
-const state = {
-  currentScreen: 1,
-  data: {
+function createEmptyLead() {
+  return {
+    nome: '',
+    empresa: '',
+    whatsapp: '',
+    email: ''
+  };
+}
+
+function createEmptyData() {
+  return {
     segmento: '',
     regime: '',
     necessidade: '',
     usuarios: 1,
     modulos: {},
     cardapioPlano: '',
-    lead: {
-      nome: '',
-      empresa: '',
-      whatsapp: '',
-      email: ''
+    lead: createEmptyLead()
+  };
+}
+
+function createEmptyResultado() {
+  return {
+    offline: {
+      nomePlano: '',
+      valorPlano: 0,
+      extras: 0,
+      valorExtras: 0,
+      modulosNomes: [],
+      modulosValoresFormatados: [],
+      modulosConsulta: [],
+      valorModulos: 0,
+      totalCalculado: 0,
+      planoCardapio: null
+    },
+    web: {
+      nomePlano: '',
+      descricao: '',
+      recursos: [],
+      valorPlano: 0,
+      extras: 0,
+      valorExtras: 0,
+      totalCalculado: 0
     }
-  },
-  resultado: {
-    nomePlano: '',
-    valorPlano: 0,
-    extras: 0,
-    valorExtras: 0,
-    modulosNomes: [],
-    modulosValores: [],
-    modulosConsulta: [],
-    valorModulos: 0,
-    totalCalculado: 0
-  }
+  };
+}
+
+const state = {
+  currentScreen: 1,
+  resultadoTab: 'offline',
+  data: createEmptyData(),
+  resultado: createEmptyResultado()
 };
 
 const appContainer = document.getElementById('app-container');
@@ -323,6 +348,12 @@ function renderProgress(stepIndex, totalSteps = 6) {
   return `<div class="step-indicator">${dots}</div>`;
 }
 
+function setResultadoTab(tab) {
+  if (!['offline', 'web'].includes(tab)) return;
+  state.resultadoTab = tab;
+  render();
+}
+
 function render() {
   let content = '';
   
@@ -570,14 +601,42 @@ function render() {
       `;
       break;
 
-    case 7:
+    case 7: {
+      const resultTabs = [
+        { id: 'offline', label: 'Offline com Backup' },
+        { id: 'web', label: 'WEB' }
+      ];
+      const activeResultTab = resultTabs.some(tab => tab.id === state.resultadoTab) ? state.resultadoTab : 'offline';
+      const isOfflineResult = activeResultTab === 'offline';
+      const activeResult = state.resultado[activeResultTab];
+      const summaryTitle = isOfflineResult ? 'Solução Offline com Backup' : 'Solução WEB';
+      const summaryMeta = isOfflineResult
+        ? 'Instalação local com sincronização e recuperação de dados.'
+        : activeResult.descricao;
+
       content = `
         <div class="screen">
           ${renderProgress(7, 7)}
           <div style="background: var(--c-green); color: white; padding: 12px; border-radius: var(--r-md); font-size: var(--fs-sm); font-weight: 700; text-align: center; margin-bottom: 20px;">
             Cotação calculada com sucesso! Compartilhe a proposta ou agende uma reunião.
           </div>
-          
+
+          <div role="tablist" aria-label="Modalidade da cotação" style="display:flex; gap:10px; margin: 0 0 18px; padding: 6px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);">
+            ${resultTabs.map(tab => `
+              <button
+                type="button"
+                class="btn-secondary"
+                role="tab"
+                aria-selected="${activeResultTab === tab.id}"
+                aria-controls="quote-result-panel"
+                id="quote-tab-${tab.id}"
+                onclick="setResultadoTab('${tab.id}')"
+                style="flex:1; border-radius:999px; border:none; background:${activeResultTab === tab.id ? 'var(--c-green)' : 'transparent'}; color:${activeResultTab === tab.id ? '#fff' : 'var(--on-dark)'}; font-weight:700; padding: 10px 12px;"
+              >${tab.label}</button>
+            `).join('')}
+          </div>
+
+          <div id="quote-result-panel" role="tabpanel" aria-labelledby="quote-tab-${activeResultTab}">
           <div class="glass-card" style="margin-bottom: 16px;">
             <div class="muted" style="font-weight:700; font-size: 0.75rem; margin-bottom: 8px;">PERFIL DIAGNOSTICADO</div>
             <div style="font-size: var(--fs-sm); font-weight: 600;">
@@ -588,17 +647,29 @@ function render() {
           <div class="glass-card" style="margin-bottom: 16px;">
             <div class="muted" style="font-weight:700; font-size: 0.75rem; margin-bottom: 8px;">SOLUÇÃO INDICADA</div>
             <div style="font-size: var(--fs-md); font-weight: 800; color: var(--lime); margin-bottom: 4px;">
-              Plano ${state.resultado.nomePlano}
+              ${summaryTitle}
             </div>
-            ${state.data.cardapioPlano ? `
+            <div style="font-size: var(--fs-xs); color: var(--on-dark-muted); margin-bottom: 8px;">
+              ${summaryMeta}
+            </div>
+            <div style="font-size: var(--fs-md); font-weight: 800; color: var(--lime); margin-bottom: 4px;">
+              Plano ${activeResult.nomePlano}
+            </div>
+            ${isOfflineResult && activeResult.planoCardapio ? `
               <div style="font-size: var(--fs-xs); color: var(--on-dark-muted); margin-top: 8px;">
-                <strong>Cardápio Digital QR Code:</strong> ${getPlanoCardapio(state.data.cardapioPlano)?.nome || state.data.cardapioPlano} (${(getPlanoCardapio(state.data.cardapioPlano)?.valor || 0).toFixed(2).replace('.', ',')} / mês)
+                <strong>Cardápio Digital QR Code:</strong> ${activeResult.planoCardapio.nome} (${activeResult.planoCardapio.valor.toFixed(2).replace('.', ',')} / mês)
               </div>
             ` : ''}
-            ${state.resultado.modulosNomes.length > 0 ? `
+            ${isOfflineResult && activeResult.modulosNomes.length > 0 ? `
               <div style="font-size: var(--fs-xs); color: var(--on-dark-muted); margin-top: 8px;">
                 <strong>Módulos Adicionais:</strong><br>
-                ${state.resultado.modulosNomes.join('<br>')}
+                ${activeResult.modulosNomes.join('<br>')}
+              </div>
+            ` : ''}
+            ${!isOfflineResult && activeResult.recursos.length > 0 ? `
+              <div style="font-size: var(--fs-xs); color: var(--on-dark-muted); margin-top: 8px;">
+                <strong>Recursos incluídos:</strong><br>
+                ${activeResult.recursos.join('<br>')}
               </div>
             ` : ''}
           </div>
@@ -608,27 +679,30 @@ function render() {
             
             <div class="breakdown-row">
               <span class="muted">Subtotal Plano Base</span>
-              <span>R$ ${state.resultado.valorPlano.toFixed(2).replace('.',',')}</span>
+              <span>R$ ${activeResult.valorPlano.toFixed(2).replace('.',',')}</span>
             </div>
             <div class="breakdown-row">
               <span class="muted">Subtotal Usuários Extras</span>
-              <span>R$ ${state.resultado.valorExtras.toFixed(2).replace('.',',')}</span>
+              <span>R$ ${activeResult.valorExtras.toFixed(2).replace('.',',')}</span>
             </div>
+            ${isOfflineResult ? `
             <div class="breakdown-row">
               <span class="muted">Subtotal Módulos</span>
-              <span>R$ ${state.resultado.valorModulos.toFixed(2).replace('.',',')}</span>
+              <span>R$ ${activeResult.valorModulos.toFixed(2).replace('.',',')}</span>
             </div>
+            ` : ''}
             
             <div class="breakdown-row total">
               <span>Mensalidade Estimada</span>
-              <span>R$ ${state.resultado.totalCalculado.toFixed(2).replace('.',',')} / mês</span>
+              <span>R$ ${activeResult.totalCalculado.toFixed(2).replace('.',',')} / mês</span>
             </div>
             
-            ${state.resultado.modulosConsulta.length > 0 ? `
+            ${isOfflineResult && activeResult.modulosConsulta.length > 0 ? `
               <div style="margin-top: 12px; font-size: 0.7rem; color: var(--c-orange);">
                 * Há módulos selecionados com valores sob consulta técnica.
               </div>
             ` : ''}
+          </div>
           </div>
 
           <div class="summary-actions">
@@ -642,6 +716,7 @@ function render() {
         </div>
       `;
       break;
+    }
   }
 
   appContainer.innerHTML = content;
@@ -696,87 +771,158 @@ function goToModulos() {
 }
 function resetApp() {
   state.currentScreen = 1;
-  state.data = { segmento: '', regime: '', necessidade: '', usuarios: 1, modulos: {}, cardapioPlano: '', lead: { nome: '', empresa: '', whatsapp: '', email: '' } };
+  state.resultadoTab = 'offline';
+  state.data = createEmptyData();
+  state.resultado = createEmptyResultado();
+  activeShare = null;
+  if (shareDialog && typeof shareDialog.close === 'function') {
+    shareDialog.close();
+  }
   render();
 }
 
 // Cálculo e WhatsApp
 function calcularERedirecionar() {
   const s = state.data;
-  
-  // Validar Lead
-  if(!s.lead.nome || !s.lead.whatsapp) {
-    alert("Por favor, preencha seu nome e WhatsApp para receber a cotação.");
+
+  if (!s.lead.nome || !s.lead.whatsapp) {
+    alert("Por favor, preencha seu nome e WhatsApp para visualizar a cotação.");
     return;
   }
 
-  // 1. Calcular Plano Base
-  let nomePlano = 'Essencial Simples';
-  let valorPlano = 250;
+  const usuariosCount = parseInt(s.usuarios, 10) || 1;
+  const extras = usuariosCount > 1 ? usuariosCount - 1 : 0;
 
+  let nomePlanoOff = 'Essencial Simples (iComércio Gestão)';
+  let valorPlanoOff = 250;
   if (s.necessidade === 'fiscal') {
-    nomePlano = 'Start Lite (iComércio Lite)';
-    valorPlano = 180;
+    nomePlanoOff = 'Start Lite (iComércio Lite)';
+    valorPlanoOff = 180;
   } else if (s.segmento === 'supermercado' && s.necessidade === 'pdv') {
-    nomePlano = 'Gestão Plus (iComércio Gestão + PDV)';
-    valorPlano = 300;
+    nomePlanoOff = 'Gestão Plus (iComércio Gestão + PDV)';
+    valorPlanoOff = 300;
   } else if (s.regime === 'mei') {
-    nomePlano = 'Start MEI (iComércio Gestão)';
-    valorPlano = 200;
+    nomePlanoOff = 'Start MEI (iComércio Gestão)';
+    valorPlanoOff = 200;
   } else if (s.regime === 'simples') {
-    nomePlano = 'Essencial Simples (iComércio Gestão)';
-    valorPlano = 250;
+    nomePlanoOff = 'Essencial Simples (iComércio Gestão)';
+    valorPlanoOff = 250;
   } else if (s.regime === 'normal') {
-    nomePlano = 'Avançado Regime Normal (iComércio Gestão)';
-    valorPlano = 280;
+    nomePlanoOff = 'Avançado Regime Normal (iComércio Gestão)';
+    valorPlanoOff = 280;
   }
 
-  // 2. Calcular Usuários Extras
-  let usuariosCount = parseInt(s.usuarios) || 1;
-  let extras = usuariosCount > 1 ? usuariosCount - 1 : 0;
-  let valorExtras = 0;
-  
-  if (extras >= 1 && extras <= 4) valorExtras = extras * 25;
-  else if (extras >= 5 && extras <= 10) valorExtras = extras * 20;
-  else if (extras >= 11) valorExtras = extras * 15;
+  let valorExtrasOff = 0;
+  if (extras >= 1 && extras <= 4) valorExtrasOff = extras * 25;
+  else if (extras >= 5 && extras <= 10) valorExtrasOff = extras * 20;
+  else if (extras >= 11) valorExtrasOff = extras * 15;
 
-  // 3. Calcular Módulos
-  let valorModulos = 0;
-  let modulosNomes = [];
-  let modulosValoresFormatados = [];
-  let modulosConsulta = [];
+  let valorModulosOff = 0;
+  const modulosNomesOff = [];
+  const modulosValoresOff = [];
+  const modulosConsultaOff = [];
 
   modulosData.forEach(m => {
     if (m.id === 'm14') return;
     if (s.modulos[m.id]) {
-      modulosNomes.push(m.nome);
+      modulosNomesOff.push(m.nome);
       if (m.consulta) {
-        modulosConsulta.push(m.nome);
-        modulosValoresFormatados.push(`${m.nome} (Sob consulta)`);
+        modulosConsultaOff.push(m.nome);
+        modulosValoresOff.push(`${m.nome} (Sob consulta)`);
       } else {
         let p = m.preco;
-        if (m.id === 'm10') p = p * usuariosCount; // App mobile = por licença, vamos assumir 1 por usuário neste wizard simples
-        valorModulos += p;
-        modulosValoresFormatados.push(`${m.nome} (R$ ${p.toFixed(2)})`);
+        if (m.id === 'm10') p *= usuariosCount;
+        valorModulosOff += p;
+        modulosValoresOff.push(`${m.nome} (R$ ${p.toFixed(2)})`);
       }
     }
   });
 
   const planoCardapio = s.modulos.m14 ? getPlanoCardapio(s.cardapioPlano) : null;
   if (planoCardapio) {
-    modulosNomes.push(`Cardápio Digital QR Code - ${planoCardapio.nome}`);
-    modulosConsulta.push(`Cardápio Digital QR Code - ${planoCardapio.nome}`);
-    modulosValoresFormatados.push(`Cardápio Digital QR Code (${planoCardapio.nome} - R$ ${planoCardapio.valor.toFixed(2)})`);
-    valorModulos += planoCardapio.valor;
+    const cardapioNome = `Cardápio Digital QR Code - ${planoCardapio.nome}`;
+    modulosNomesOff.push(cardapioNome);
+    modulosValoresOff.push(`${cardapioNome} (R$ ${planoCardapio.valor.toFixed(2)})`);
+    valorModulosOff += planoCardapio.valor;
   }
 
-  const totalCalculado = valorPlano + valorExtras + valorModulos;
+  const totalCalculadoOff = valorPlanoOff + valorExtrasOff + valorModulosOff;
+
+  let nomePlanoWeb = '';
+  let descricaoWeb = '';
+  let recursosWeb = [];
+  let valorPlanoWeb = 0;
+
+  if (s.segmento === 'transporte') {
+    nomePlanoWeb = 'Transporte de Carga';
+    descricaoWeb = 'Plano exclusivo para transportadoras';
+    valorPlanoWeb = 180;
+    recursosWeb = [
+      'Conhecimento de Transporte Eletrônico CT-e',
+      'Manifesto Eletrônico de Documentos Fiscais MDF-e'
+    ];
+  } else if (s.regime === 'mei') {
+    nomePlanoWeb = 'Plano MEI';
+    descricaoWeb = 'Plano de controle de gestão para Microempreendedor Individual (MEI)';
+    valorPlanoWeb = 120;
+    recursosWeb = [
+      'Dashboard (Financeiro, vendas)',
+      'Gestão de vendas (emissão de pedido de vendas, tabela de preços, promoção)',
+      'Financeiro (contas a pagar, contas a receber, fluxo de caixa e Emissão Boletos)',
+      'Estoque (entrada de notas por xml, ajuste de estoque, local de estoque)',
+      'Frente de Caixa (PDV)'
+    ];
+  } else if (s.necessidade === 'fiscal') {
+    if (['varejo', 'supermercado', 'food'].includes(s.segmento)) {
+      nomePlanoWeb = 'Nota Fiscal Consumidor';
+      descricaoWeb = 'Uma escolha excelente para micro empresa que precisa somente gerar nota';
+      valorPlanoWeb = 120;
+      recursosWeb = ['Emissão de Nota Fiscal modelo 65 (NFC-e)'];
+    } else {
+      nomePlanoWeb = 'Plano Nota Fiscal Eletrônica';
+      descricaoWeb = 'Uma escolha excelente para micro empresa que precisa somente gerar notas';
+      valorPlanoWeb = 120;
+      recursosWeb = ['Emissão de Nota Fiscal modelo 55 (NF-e)'];
+    }
+  } else {
+    nomePlanoWeb = 'Gestão de Estoque Fiscal e Financeiro';
+    descricaoWeb = 'Tenha a Gestão completa da sua empresa';
+    valorPlanoWeb = 160;
+    recursosWeb = [
+      'Frente de Caixa (PDV)',
+      'Dashboard (Financeiro, vendas)',
+      'Gestão de vendas (emissão de pedido de vendas, tabela de preços, promoção)',
+      'Financeiro (contas a pagar, contas a receber, fluxo de caixa e Emissão Boletos)',
+      'Estoque (entrada de notas por xml, ajuste de estoque, local de estoque)',
+      'Notas Fiscais (NF-e, NFC-e)'
+    ];
+  }
+
+  const valorExtrasWeb = extras * 20;
+  const totalCalculadoWeb = valorPlanoWeb + valorExtrasWeb;
 
   state.resultado = {
-    nomePlano, valorPlano, extras, valorExtras,
-    modulosNomes, modulosValoresFormatados, modulosConsulta,
-    valorModulos, totalCalculado,
-    planoCardapio
+    offline: {
+      nomePlano: nomePlanoOff,
+      valorPlano: valorPlanoOff,
+      extras,
+      valorExtras: valorExtrasOff,
+      modulosNomes: modulosNomesOff,
+      modulosValoresFormatados: modulosValoresOff,
+      modulosConsulta: modulosConsultaOff,
+      valorModulos: valorModulosOff,
+      totalCalculado: totalCalculadoOff,
+      planoCardapio
+    },
+    web: {
+      nomePlano: nomePlanoWeb,
+      descricao: descricaoWeb,
+      recursos: recursosWeb,
+      valorPlano: valorPlanoWeb,
+      extras,
+      valorExtras: valorExtrasWeb,
+      totalCalculado: totalCalculadoWeb
+    }
   };
 
   state.currentScreen = 7;
@@ -786,7 +932,8 @@ function calcularERedirecionar() {
 function buildQuoteMessage() {
   const l = state.data.lead;
   const s = state.data;
-  const r = state.resultado;
+  const offline = state.resultado.offline;
+  const web = state.resultado.web;
 
   const getLabel = (arr, val) => arr.find(x => x.id === val)?.label || val;
   const segLabel = getLabel([
@@ -815,17 +962,20 @@ Acabei de efetuar a simulação na calculadora do vosso site e solicito a minha 
 • Responsável: ${l.nome}
 • Segmento: ${segLabel}
 • Regime Tributário: ${regLabel}
-• Usuários: ${s.usuarios} utilizador(es) (${r.extras} extra(s))
+• Usuários: ${s.usuarios} utilizador(es) (${offline.extras} extra(s))
 
-📦 PROPOSTA DIAGNOSTICADA:
-• Plano Base: ${r.nomePlano} (R$ ${r.valorPlano.toFixed(2)})
-• Usuários Extras: ${r.extras} un. (R$ ${r.valorExtras.toFixed(2)})
-${r.planoCardapio ? `• Plano Cardápio Digital QR Code: ${r.planoCardapio.nome} (R$ ${r.planoCardapio.valor.toFixed(2)})` : ''}
-• Módulos Selecionados:
-${r.modulosValoresFormatados.length > 0 ? r.modulosValoresFormatados.map(m => `  - ${m}`).join('\n') : '  - Nenhum adicional'}
-${r.modulosConsulta.length > 0 ? `  (Módulos sob consulta técnica: ${r.modulosConsulta.join(', ')})` : ''}
+📦 PROPOSTA OFFLINE COM BACKUP:
+• Plano Base: ${offline.nomePlano} (R$ ${offline.valorPlano.toFixed(2)})
+• Usuários Extras: ${offline.extras} un. (R$ ${offline.valorExtras.toFixed(2)})
+• Módulos e integrações:
+${offline.modulosValoresFormatados.length > 0 ? offline.modulosValoresFormatados.map(m => `  - ${m}`).join('\n') : '  - Nenhum adicional'}
+${offline.modulosConsulta.length > 0 ? `  (Módulos sob consulta técnica: ${offline.modulosConsulta.join(', ')})` : ''}
+💰 Total Offline estimado: R$ ${offline.totalCalculado.toFixed(2)}/mês
 
-💰 TOTAL ESTIMADO: R$ ${r.totalCalculado.toFixed(2)}/mês
+☁️ PROPOSTA WEB:
+• Plano: ${web.nomePlano} (R$ ${web.valorPlano.toFixed(2)})
+• Usuários Extras: ${web.extras} un. (R$ ${web.valorExtras.toFixed(2)})
+💰 Total Web estimado: R$ ${web.totalCalculado.toFixed(2)}/mês
 
 Aguardo o envio da proposta formal e o agendamento de uma demonstração!`;
 
@@ -838,7 +988,8 @@ function formatMeetingCurrency(value) {
 
 function buildMeetingMessage(date, time) {
   const lead = state.data.lead;
-  const result = state.resultado;
+  const offline = state.resultado.offline;
+  const web = state.resultado.web;
   const firstName = lead.nome.trim().split(/\s+/)[0] || 'tudo bem';
   const segmentLabels = {
     varejo: 'Loja / Varejo',
@@ -863,7 +1014,7 @@ function buildMeetingMessage(date, time) {
   });
   const [hour, minute] = time.split(':');
   const timeLabel = `${Number(hour)}h${minute}`;
-  const planName = result.nomePlano.replace(/\s*\(([^)]+)\)$/, ' — $1');
+  const planName = offline.nomePlano.replace(/\s*\(([^)]+)\)$/, ' — $1');
   const moduleLines = modulosData
     .filter(module => module.id !== 'm14' && state.data.modulos[module.id])
     .map(module => {
@@ -872,8 +1023,8 @@ function buildMeetingMessage(date, time) {
       return `• ${module.nome}: ${formatMeetingCurrency(module.preco * licenses)}/mês`;
     });
 
-  if (result.planoCardapio) {
-    moduleLines.push(`• Cardápio Digital QR Code — ${result.planoCardapio.nome}: ${formatMeetingCurrency(result.planoCardapio.valor)}/mês`);
+  if (offline.planoCardapio) {
+    moduleLines.push(`• Cardápio Digital QR Code — ${offline.planoCardapio.nome}: ${formatMeetingCurrency(offline.planoCardapio.valor)}/mês`);
   }
 
   return `Olá, ${firstName}! Tudo certo? 😊
@@ -890,10 +1041,16 @@ Consegui encaixar sua demonstração na agenda de um dos nossos especialistas! S
 • Usuários: ${state.data.usuarios}
 
 📦 **SOLUÇÃO INDICADA**
-• Plano ${planName}: ${formatMeetingCurrency(result.valorPlano)}/mês
+**Offline com Backup**
+• Plano ${planName}: ${formatMeetingCurrency(offline.valorPlano)}/mês
+• Usuários extras: ${offline.extras} (${formatMeetingCurrency(offline.valorExtras)}/mês)
 ${moduleLines.length ? moduleLines.join('\n') : '• Sem módulos adicionais'}
+• Total Offline estimado: ${formatMeetingCurrency(offline.totalCalculado)}/mês
 
-💰 **Investimento mensal estimado: ${formatMeetingCurrency(result.totalCalculado)}**
+**WEB**
+• Plano ${web.nomePlano}: ${formatMeetingCurrency(web.valorPlano)}/mês
+• Usuários extras: ${web.extras} (${formatMeetingCurrency(web.valorExtras)}/mês)
+• Total Web estimado: ${formatMeetingCurrency(web.totalCalculado)}/mês
 
 Na demonstração, nosso especialista vai apresentar o sistema e mostrar como ele pode ajudar na gestão do seu negócio.
 
