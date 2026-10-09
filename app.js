@@ -203,7 +203,6 @@ function showModuleDetails(moduleId) {
   const item = modulosDetalhes[moduleId];
   if (!item) return;
 
-  document.getElementById('inspector-placeholder').hidden = true;
   document.getElementById('inspector-content').hidden = false;
   const image = document.getElementById('insp-img');
   image.hidden = false;
