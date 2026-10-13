@@ -20,7 +20,16 @@
         <button id="tab-whatsapp" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="whatsapp" tabindex="-1">WhatsApp</button>
         <button id="tab-presencial" class="attendance-tab" type="button" role="tab" aria-selected="false" aria-controls="attendance-content" data-attendance-tab="presencial" tabindex="-1">Presencial</button>
       </div>
-      <div id="attendance-content" class="attendance-content" role="tabpanel" aria-live="polite" aria-labelledby="tab-ativa">Selecione um segmento abaixo para carregar o roteiro de abordagem comercial.</div>
+      <div id="attendance-content" class="attendance-content" role="tabpanel" aria-live="polite" aria-labelledby="tab-ativa">
+        <p id="attendance-text" class="attendance-text">Selecione um segmento abaixo para carregar o roteiro de abordagem comercial.</p>
+        <button id="attendance-edit" class="attendance-edit" type="button" aria-label="Editar texto do Assistente Comercial i3" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+          </svg>
+          <span>Editar texto</span>
+        </button>
+      </div>
     </section>
 
     <div class="main-grid">
@@ -52,6 +61,24 @@
       <footer class="share-dialog-actions">
         <button id="share-copy-all" class="btn-secondary" type="button">Copiar tudo</button>
         <button id="share-open-target" class="btn-primary" type="button">Abrir aplicativo</button>
+      </footer>
+    </section>
+  </dialog>
+  <dialog id="attendance-editor" class="attendance-editor" aria-labelledby="attendance-editor-title">
+    <section class="attendance-editor-panel">
+      <header class="attendance-editor-header">
+        <div>
+          <span class="attendance-editor-eyebrow">Assistente Comercial i3</span>
+          <h2 id="attendance-editor-title">Editar texto do roteiro</h2>
+        </div>
+        <button id="attendance-editor-close" class="share-close" type="button" aria-label="Fechar janela">×</button>
+      </header>
+      <label class="attendance-editor-label" for="attendance-editor-value">Texto para esta tela e canal</label>
+      <textarea id="attendance-editor-value" class="attendance-editor-value" rows="10"></textarea>
+      <p id="attendance-editor-status" class="attendance-editor-status" role="status" aria-live="polite"></p>
+      <footer class="attendance-editor-actions">
+        <button id="attendance-editor-cancel" class="btn-secondary" type="button">Cancelar</button>
+        <button id="attendance-editor-save" class="btn-primary" type="button">Salvar texto</button>
       </footer>
     </section>
   </dialog>

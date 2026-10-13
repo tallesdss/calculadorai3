@@ -159,7 +159,38 @@ const attendanceScriptsByScreen = {
 let currentAttendanceTab = 'ativa';
 const attendanceTabs = [...document.querySelectorAll('[data-attendance-tab]')];
 const attendanceContent = document.getElementById('attendance-content');
+const attendanceText = document.getElementById('attendance-text');
+const attendanceEditButton = document.getElementById('attendance-edit');
 const attendanceStatus = document.getElementById('attendance-status');
+const attendanceEditor = document.getElementById('attendance-editor');
+const attendanceEditorValue = document.getElementById('attendance-editor-value');
+const attendanceEditorStatus = document.getElementById('attendance-editor-status');
+let currentAttendanceScriptKey = null;
+let attendanceStorageWarning = '';
+
+function loadCustomAttendanceScripts() {
+  try {
+    const savedScripts = localStorage.getItem('i3-assistant-scripts');
+    if (!savedScripts) return {};
+
+    const parsedScripts = JSON.parse(savedScripts);
+    if (
+      !parsedScripts ||
+      typeof parsedScripts !== 'object' ||
+      Array.isArray(parsedScripts) ||
+      Object.values(parsedScripts).some(script => typeof script !== 'string')
+    ) {
+      throw new Error('Formato de roteiros salvos inválido.');
+    }
+    return parsedScripts;
+  } catch (error) {
+    console.error('Não foi possível carregar os textos personalizados do assistente.', error);
+    attendanceStorageWarning = 'Não foi possível carregar os textos salvos anteriormente. Você pode editar e salvar um novo texto.';
+    return {};
+  }
+}
+
+let customAttendanceScripts = loadCustomAttendanceScripts();
 
 function selectAttendanceTab(tabName) {
   if (!['ativa', 'recebida', 'whatsapp', 'presencial'].includes(tabName)) return;
@@ -180,22 +211,67 @@ function updateAttendanceContent() {
     const segmento = segmentosScripts[state.data.segmento];
     if (!segmento) {
       if (attendanceStatus) attendanceStatus.textContent = 'Tela 1 • Selecione um segmento';
-      attendanceContent.textContent = 'Selecione um segmento abaixo para carregar o roteiro de abordagem comercial.';
+      attendanceText.textContent = 'Selecione um segmento abaixo para carregar o roteiro de abordagem comercial.';
+      currentAttendanceScriptKey = null;
+      attendanceEditButton.hidden = true;
       return;
     }
 
     if (attendanceStatus) attendanceStatus.textContent = `Tela 1 • Roteiro: ${segmento.nome}`;
-    attendanceContent.textContent = segmento[currentAttendanceTab];
+    currentAttendanceScriptKey = `segment-${state.data.segmento}-${currentAttendanceTab}`;
+    attendanceText.textContent = customAttendanceScripts[currentAttendanceScriptKey] ?? segmento[currentAttendanceTab];
+  } else {
+    if (attendanceStatus) attendanceStatus.textContent = `Tela ${state.currentScreen} • Condução Comercial`;
+    const screenScripts = attendanceScriptsByScreen[state.currentScreen] || attendanceScriptsByScreen[1];
+    const channel = currentAttendanceTab === 'ativa' || currentAttendanceTab === 'recebida'
+      ? 'ligacao'
+      : currentAttendanceTab;
+    currentAttendanceScriptKey = `screen-${state.currentScreen}-${channel}`;
+    attendanceText.textContent = customAttendanceScripts[currentAttendanceScriptKey]
+      ?? screenScripts[channel]
+      ?? 'Acompanhe as opções com o cliente para avançar a cotação.';
+  }
+  attendanceEditButton.hidden = false;
+}
+
+function openAttendanceEditor() {
+  if (!currentAttendanceScriptKey) return;
+  attendanceEditorValue.value = attendanceText.textContent;
+  attendanceEditorStatus.textContent = attendanceStorageWarning;
+  attendanceEditor.showModal();
+  attendanceEditorValue.focus();
+}
+
+function saveAttendanceScript() {
+  const script = attendanceEditorValue.value;
+  if (!script.trim()) {
+    attendanceEditorStatus.textContent = 'Digite um texto antes de salvar.';
+    attendanceEditorValue.focus();
     return;
   }
 
-  if (attendanceStatus) attendanceStatus.textContent = `Tela ${state.currentScreen} • Condução Comercial`;
-  const screenScripts = attendanceScriptsByScreen[state.currentScreen] || attendanceScriptsByScreen[1];
-  const channel = currentAttendanceTab === 'ativa' || currentAttendanceTab === 'recebida'
-    ? 'ligacao'
-    : currentAttendanceTab;
-  attendanceContent.textContent = screenScripts[channel] || 'Acompanhe as opções com o cliente para avançar a cotação.';
+  const updatedScripts = { ...customAttendanceScripts, [currentAttendanceScriptKey]: script };
+  try {
+    localStorage.setItem('i3-assistant-scripts', JSON.stringify(updatedScripts));
+  } catch (error) {
+    console.error('Não foi possível salvar o texto personalizado do assistente.', error);
+    attendanceEditorStatus.textContent = 'Não foi possível salvar. Verifique o espaço disponível no navegador e tente novamente.';
+    return;
+  }
+
+  customAttendanceScripts = updatedScripts;
+  attendanceStorageWarning = '';
+  updateAttendanceContent();
+  attendanceEditor.close();
 }
+
+attendanceEditButton.addEventListener('click', openAttendanceEditor);
+document.getElementById('attendance-editor-save').addEventListener('click', saveAttendanceScript);
+document.getElementById('attendance-editor-close').addEventListener('click', () => attendanceEditor.close());
+document.getElementById('attendance-editor-cancel').addEventListener('click', () => attendanceEditor.close());
+attendanceEditor.addEventListener('click', event => {
+  if (event.target === attendanceEditor) attendanceEditor.close();
+});
 
 attendanceTabs.forEach((tab, index) => {
   tab.addEventListener('click', () => selectAttendanceTab(tab.dataset.attendanceTab));
