@@ -56,6 +56,18 @@
         </div>
         <button id="share-dialog-close" class="share-close" type="button" aria-label="Fechar janela">×</button>
       </header>
+      <div id="meeting-quote-options" class="meeting-quote-options" role="group" aria-label="Cotações no convite" hidden>
+        <button class="meeting-quote-option" type="button" data-meeting-quote="web" aria-pressed="false">Web</button>
+        <button class="meeting-quote-option" type="button" data-meeting-quote="offline" aria-pressed="false">Offline</button>
+        <button class="meeting-quote-option" type="button" data-meeting-quote="all" aria-pressed="true">Todos</button>
+      </div>
+      <div id="meeting-type-options" class="meeting-type-options" hidden>
+        <span class="meeting-type-label">Tipo de reunião</span>
+        <div class="meeting-quote-options" role="group" aria-label="Tipo de reunião">
+          <button class="meeting-quote-option" type="button" data-meeting-type="video" aria-pressed="true">Video Chamada</button>
+          <button class="meeting-quote-option" type="button" data-meeting-type="presencial" aria-pressed="false">Presencial</button>
+        </div>
+      </div>
       <div id="share-dialog-fields" class="share-dialog-fields"></div>
       <p id="share-dialog-status" class="share-dialog-status" role="status" aria-live="polite"></p>
       <footer class="share-dialog-actions">

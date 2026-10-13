@@ -1062,7 +1062,7 @@ function formatMeetingCurrency(value) {
   return `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
 }
 
-function buildMeetingMessage(date, time) {
+function buildMeetingMessage(date, time, quoteMode = 'all', meetingType = 'video') {
   const lead = state.data.lead;
   const offline = state.resultado.offline;
   const web = state.resultado.web;
@@ -1103,12 +1103,28 @@ function buildMeetingMessage(date, time) {
     moduleLines.push(`• Cardápio Digital QR Code — ${offline.planoCardapio.nome}: ${formatMeetingCurrency(offline.planoCardapio.valor)}/mês`);
   }
 
+  const quoteSections = [];
+  if (quoteMode === 'all' || quoteMode === 'offline') {
+    quoteSections.push(`**Offline com Backup**
+• Plano ${planName}: ${formatMeetingCurrency(offline.valorPlano)}/mês
+• Usuários extras: ${offline.extras} (${formatMeetingCurrency(offline.valorExtras)}/mês)
+${moduleLines.length ? moduleLines.join('\n') : '• Sem módulos adicionais'}
+• Total Offline estimado: ${formatMeetingCurrency(offline.totalCalculado)}/mês`);
+  }
+  if (quoteMode === 'all' || quoteMode === 'web') {
+    quoteSections.push(`**WEB**
+• Plano ${web.nomePlano}: ${formatMeetingCurrency(web.valorPlano)}/mês
+• Usuários extras: ${web.extras} (${formatMeetingCurrency(web.valorExtras)}/mês)
+• Total Web estimado: ${formatMeetingCurrency(web.totalCalculado)}/mês`);
+  }
+
   return `Olá, ${firstName}! Tudo certo? 😊
 
 Consegui encaixar sua demonstração na agenda de um dos nossos especialistas! Seguem os detalhes:
 
 📅 **Data:** ${dateLabel}
 🕓 **Horário:** ${timeLabel}
+📍 **Tipo de reunião:** ${meetingType === 'presencial' ? 'Presencial' : 'Video Chamada'}
 
 🏢 **DADOS DA SUA EMPRESA**
 • Empresa: ${lead.empresa || 'Não informada'}
@@ -1117,20 +1133,11 @@ Consegui encaixar sua demonstração na agenda de um dos nossos especialistas! S
 • Usuários: ${state.data.usuarios}
 
 📦 **SOLUÇÃO INDICADA**
-**Offline com Backup**
-• Plano ${planName}: ${formatMeetingCurrency(offline.valorPlano)}/mês
-• Usuários extras: ${offline.extras} (${formatMeetingCurrency(offline.valorExtras)}/mês)
-${moduleLines.length ? moduleLines.join('\n') : '• Sem módulos adicionais'}
-• Total Offline estimado: ${formatMeetingCurrency(offline.totalCalculado)}/mês
-
-**WEB**
-• Plano ${web.nomePlano}: ${formatMeetingCurrency(web.valorPlano)}/mês
-• Usuários extras: ${web.extras} (${formatMeetingCurrency(web.valorExtras)}/mês)
-• Total Web estimado: ${formatMeetingCurrency(web.totalCalculado)}/mês
+${quoteSections.join('\n\n')}
 
 Na demonstração, nosso especialista vai apresentar o sistema e mostrar como ele pode ajudar na gestão do seu negócio.
 
-📞 Antes da visita, vou te ligar para confirmar tudo certinho.
+📞 Antes da reunião, vou te ligar para confirmar tudo certinho.
 
 Obrigado pela oportunidade, ${firstName}! Até lá! 🤝`;
 }
@@ -1178,6 +1185,8 @@ function scheduleMeeting() {
       { label: 'Horário da reunião', value: '', inputType: 'time' },
       { label: 'Convite e detalhes da cotação', value: '', multiline: true }
     ],
+    quoteMode: 'all',
+    meetingType: 'video',
     copyAll: ''
   };
   showShareDialog();
@@ -1188,7 +1197,7 @@ function updateMeetingDraft() {
 
   const [dateField, timeField, messageField] = activeShare.fields;
   const message = dateField.value && timeField.value
-    ? buildMeetingMessage(dateField.value, timeField.value)
+    ? buildMeetingMessage(dateField.value, timeField.value, activeShare.quoteMode, activeShare.meetingType)
     : 'Selecione a data e o horário da reunião para gerar o convite com os detalhes da cotação.';
   messageField.value = message;
   activeShare.copyAll = dateField.value && timeField.value ? message : '';
@@ -1201,6 +1210,34 @@ function updateMeetingDraft() {
   if (messageField.copyButton) messageField.copyButton.disabled = !canCopy;
   shareDialogStatus.textContent = canCopy ? '' : 'Selecione a data e o horário para copiar o convite.';
 }
+
+const meetingQuoteOptions = document.getElementById('meeting-quote-options');
+const meetingQuoteButtons = [...document.querySelectorAll('[data-meeting-quote]')];
+
+meetingQuoteButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    if (!activeShare || activeShare.mode !== 'meeting') return;
+    activeShare.quoteMode = button.dataset.meetingQuote;
+    meetingQuoteButtons.forEach(option => {
+      option.setAttribute('aria-pressed', String(option === button));
+    });
+    updateMeetingDraft();
+  });
+});
+
+const meetingTypeOptions = document.getElementById('meeting-type-options');
+const meetingTypeButtons = [...document.querySelectorAll('[data-meeting-type]')];
+
+meetingTypeButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    if (!activeShare || activeShare.mode !== 'meeting') return;
+    activeShare.meetingType = button.dataset.meetingType;
+    meetingTypeButtons.forEach(option => {
+      option.setAttribute('aria-pressed', String(option === button));
+    });
+    updateMeetingDraft();
+  });
+});
 
 function showShareDialog() {
   const isMeeting = activeShare.mode === 'meeting';
@@ -1216,6 +1253,16 @@ function showShareDialog() {
     ? 'Abrir aplicativo de e-mail'
     : 'Abrir WhatsApp';
   shareOpenTargetButton.hidden = isMeeting;
+  meetingQuoteOptions.hidden = !isMeeting;
+  meetingTypeOptions.hidden = !isMeeting;
+  if (isMeeting) {
+    meetingQuoteButtons.forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.meetingQuote === activeShare.quoteMode));
+    });
+    meetingTypeButtons.forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.meetingType === activeShare.meetingType));
+    });
+  }
   shareDialogStatus.textContent = '';
   shareDialogFields.replaceChildren();
 
@@ -1314,6 +1361,8 @@ shareDialog.addEventListener('click', event => {
 shareDialog.addEventListener('close', () => {
   shareDialogStatus.textContent = '';
   shareDialogFields.replaceChildren();
+  meetingQuoteOptions.hidden = true;
+  meetingTypeOptions.hidden = true;
   activeShare = null;
 });
 
@@ -1321,6 +1370,8 @@ shareDialog.addEventListener('cancel', () => {
   activeShare = null;
   shareDialogStatus.textContent = '';
   shareDialogFields.replaceChildren();
+  meetingQuoteOptions.hidden = true;
+  meetingTypeOptions.hidden = true;
 });
 
 // Inicializa a App

@@ -379,6 +379,50 @@ p { margin: 0 0 16px; font-size: var(--fs-md); color: var(--on-dark-muted); }
   gap: 16px;
 }
 
+.meeting-quote-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.meeting-type-options[hidden] {
+  display: none;
+}
+
+.meeting-type-label {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--on-dark-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.meeting-quote-options[hidden] {
+  display: none;
+}
+
+.meeting-quote-option {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-pill);
+  color: var(--on-dark-muted);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.meeting-quote-option:hover {
+  background: var(--glass);
+  color: var(--on-dark);
+}
+
+.meeting-quote-option[aria-pressed="true"] {
+  border-color: var(--lime);
+  background: var(--lime);
+  color: var(--green-900);
+}
+
 .share-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
